@@ -1,0 +1,87 @@
+@import "tailwindcss";
+@reference "tailwindcss/utilities";
+
+/* ========== LAYOUT CONTAINER ========== */
+.layout {
+  @apply flex min-h-screen bg-gray-50;
+}
+
+/* ========== MAIN CONTENT ========== */
+.layout-main {
+  @apply flex-1 flex flex-col min-h-screen;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Par défaut, sidebar ouvert */
+.layout-main.sidebar-open {
+  margin-left: 280px;
+  width: calc(100% - 280px);
+}
+
+/* Quand le sidebar est fermé */
+.layout-main.sidebar-closed {
+  margin-left: 80px;
+  width: calc(100% - 80px);
+}
+
+/* ========== CONTENT AREA ========== */
+.layout-content {
+  @apply flex-1 p-6 overflow-y-auto overflow-x-hidden;
+  max-height: calc(100vh - 73px); /* 73px = hauteur du header */
+}
+
+/* Si pas de header, ajuster */
+.layout-main:not(:has(.header)) .layout-content {
+  max-height: 100vh;
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 768px) {
+  .layout-main {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .sidebar-closed ~ .layout-main {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .layout-content {
+    @apply p-4;
+    max-height: calc(100vh - 65px); /* Header plus petit sur mobile */
+  }
+}
+
+/* ========== PRINT ========== */
+@media print {
+  .layout-main {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .layout-content {
+    @apply p-0;
+    max-height: none;
+    overflow: visible;
+  }
+}
+
+/* ========== SCROLLBAR STYLING ========== */
+.layout-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.layout-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.layout-content::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.layout-content::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}

@@ -1,0 +1,113 @@
+@import "tailwindcss";
+@reference "tailwindcss/utilities";
+
+/* ========== BACKDROP ========== */
+.alert-backdrop {
+  @apply fixed inset-0 bg-black/50 flex items-center justify-center 
+         z-[9999] backdrop-blur-sm;
+}
+
+/* ========== MODAL ========== */
+.alert-modal {
+  @apply bg-white rounded-2xl shadow-2xl p-8 w-[95%] max-w-md 
+         text-center relative;
+}
+
+/* ========== ICON CONTAINER ========== */
+.alert-icon {
+  @apply w-20 h-20 mx-auto mb-4 rounded-full flex items-center justify-center;
+}
+
+.alert-icon-svg {
+  @apply w-12 h-12;
+}
+
+/* ========== TYPE VARIANTS ========== */
+.alert-error .alert-icon {
+  @apply bg-red-100 text-red-600;
+}
+
+.alert-success .alert-icon {
+  @apply bg-green-100 text-green-600;
+}
+
+.alert-warning .alert-icon {
+  @apply bg-yellow-100 text-yellow-600;
+}
+
+.alert-info .alert-icon {
+  @apply bg-blue-100 text-blue-600;
+}
+
+.alert-question .alert-icon {
+  @apply bg-purple-100 text-purple-600;
+}
+
+/* ========== TITLE ========== */
+.alert-title {
+  @apply text-2xl font-bold mb-3;
+}
+
+.alert-error .alert-title {
+  @apply text-red-600;
+}
+
+.alert-success .alert-title {
+  @apply text-green-600;
+}
+
+.alert-warning .alert-title {
+  @apply text-yellow-600;
+}
+
+.alert-info .alert-title {
+  @apply text-blue-600;
+}
+
+.alert-question .alert-title {
+  @apply text-purple-600;
+}
+
+/* ========== MESSAGE ========== */
+.alert-message {
+  @apply text-gray-700 text-base mb-6 leading-relaxed;
+}
+
+/* ========== ACTIONS ========== */
+.alert-actions {
+  @apply flex justify-center gap-3;
+}
+
+.alert-actions-double {
+  @apply justify-end;
+}
+
+/* ========== ANIMATIONS ========== */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-10px); }
+  75% { transform: translateX(10px); }
+}
+
+.alert-error {
+  animation: shake 0.3s ease-in-out;
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 768px) {
+  .alert-modal {
+    @apply p-6;
+  }
+
+  .alert-title {
+    @apply text-xl;
+  }
+
+  .alert-message {
+    @apply text-sm;
+  }
+
+  .alert-actions-double {
+    @apply flex-col;
+  }
+}
