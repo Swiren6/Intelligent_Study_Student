@@ -1,0 +1,128 @@
+@import "tailwindcss";
+@reference "tailwindcss/utilities";
+
+/* ========== BASE BUTTON ========== */
+.btn {
+  @apply relative inline-flex items-center justify-center gap-2
+         font-semibold rounded-lg transition-all duration-200
+         focus:outline-none focus:ring-2 focus:ring-offset-2
+         disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+/* ========== SIZES ========== */
+.btn-sm {
+  @apply px-3 py-1.5 text-sm;
+}
+
+.btn-md {
+  @apply px-5 py-3 text-base;
+}
+
+.btn-lg {
+  @apply px-7 py-4 text-lg;
+}
+
+.btn-full {
+  @apply w-full;
+}
+
+/* ========== PRIMARY (Bleu) ========== */
+.btn-primary {
+  @apply bg-blue-600 text-white hover:bg-blue-700 
+         focus:ring-blue-500 shadow-md hover:shadow-lg;
+}
+
+/* ========== SECONDARY (Gris) ========== */
+.btn-secondary {
+  @apply bg-gray-200 text-gray-800 hover:bg-gray-300 
+         focus:ring-gray-400;
+}
+
+/* ========== DANGER (Rouge) ========== */
+.btn-danger {
+  @apply bg-red-600 text-white hover:bg-red-700 
+         focus:ring-red-500 shadow-md hover:shadow-lg;
+}
+
+/* ========== SUCCESS (Vert) ========== */
+.btn-success {
+  @apply bg-green-600 text-white hover:bg-green-700 
+         focus:ring-green-500 shadow-md hover:shadow-lg;
+}
+
+/* ========== WARNING (Jaune) ========== */
+.btn-warning {
+  @apply bg-yellow-500 text-white hover:bg-yellow-600 
+         focus:ring-yellow-400 shadow-md hover:shadow-lg;
+}
+
+/* ========== INFO (Cyan) ========== */
+.btn-info {
+  @apply bg-cyan-500 text-white hover:bg-cyan-600 
+         focus:ring-cyan-400 shadow-md hover:shadow-lg;
+}
+
+/* ========== OUTLINE ========== */
+.btn-outline {
+  @apply bg-transparent border-2 border-blue-600 text-blue-600 
+         hover:bg-blue-50 focus:ring-blue-500;
+}
+
+/* ========== GHOST ========== */
+.btn-ghost {
+  @apply bg-transparent text-gray-700 hover:bg-gray-100 
+         focus:ring-gray-400;
+}
+
+/* ========== LOADING STATE ========== */
+.btn-loading {
+  @apply pointer-events-none;
+}
+
+.btn-spinner {
+  @apply inline-flex items-center;
+}
+
+/* ========== ICONS ========== */
+.btn-icon {
+  @apply flex items-center;
+}
+
+.btn-icon-left {
+  @apply -ml-1;
+}
+
+.btn-icon-right {
+  @apply -mr-1;
+}
+
+/* ========== DISABLED STATE ========== */
+.btn-disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+/* ========== HOVER EFFECTS ========== */
+.btn:not(.btn-disabled):not(.btn-loading):active {
+  @apply transform scale-95;
+}
+
+/* ========== ANIMATIONS ========== */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 768px) {
+  .btn {
+    @apply text-sm;
+  }
+}

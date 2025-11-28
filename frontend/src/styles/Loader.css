@@ -1,0 +1,33 @@
+@import "tailwindcss";
+@reference "tailwindcss/utilities";
+
+.loader-container {
+  @apply fixed inset-0 flex items-center justify-center bg-white/90 backdrop-blur-sm z-50;
+}
+
+.loader-content {
+  @apply flex flex-col items-center gap-4;
+}
+
+.loader {
+  @apply relative;
+}
+
+.loader-spinner {
+  @apply w-full h-full border-4 border-gray-200 border-t-blue-600 rounded-full;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loader-text {
+  @apply text-gray-600 font-medium text-lg;
+}
+
+/* Variant inline */
+.loader-inline {
+  @apply inline-flex items-center justify-center;
+}
