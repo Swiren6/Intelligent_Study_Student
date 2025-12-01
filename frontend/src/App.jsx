@@ -13,6 +13,7 @@ const Login = lazy(() => import("./components/Auth/Login"));
 const SignUp = lazy(() => import("./components/Auth/SignUp"));
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
 const MatiereTasksPage = lazy(() => import("./pages/MatiereTasksPage"));
+const CalendarPage = lazy(() => import("./pages/CalendarPage"));
 
 function App() {
   return (
@@ -21,8 +22,9 @@ function App() {
         <ToastProvider>
           <Suspense fallback={<Loader fullScreen />}>
             <Routes>
-            {/*   <Route path="/Dashboard" element={<DashboardPage />} />
-              <Route path="/matiere" element={<MatiereTasksPage />} /> */}
+              <Route path="/Dashboard" element={<DashboardPage />} />
+              <Route path="/matiere" element={<MatiereTasksPage />} /> 
+              <Route path="/calender" element={<CalendarPage />} />
               <Route path="/" element={<Landing />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<SignUp />} />
