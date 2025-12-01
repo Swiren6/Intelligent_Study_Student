@@ -2,19 +2,26 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, X, Edit, Trash2, Clock, Calendar } from 'lucide-react';
 import Navbar from '../components/Layout/Navbar';
+import { useAPI } from '../hooks/useApi';
+import { useToast } from '../hooks/useToast';
+import API_CONFIG from '../config/api.config';
 
 import '../styles/MatiereTasksPage.css';
 
 export default function MatiereTasksPage() {
   const { matiereId } = useParams();
   const navigate = useNavigate();
-  const [matiere, setMatiere] = useState(null);
+  const api = useAPI();
+  const { showSuccess, showError } = useToast();
+  
+  const [subject, setSubject] = useState(null);
   const [columns, setColumns] = useState([
-    { id: 'todo', title: 'À faire', color: 'column-todo', tasks: [] },
-    { id: 'in_progress', title: 'En cours', color: 'column-in_progress', tasks: [] },
-    { id: 'review', title: 'En révision', color: 'column-review', tasks: [] },
-    { id: 'done', title: 'Terminé', color: 'column-done', tasks: [] },
+    { id: 'A_FAIRE', title: 'À faire', color: 'column-todo', tasks: [] },
+    { id: 'EN_COURS', title: 'En cours', color: 'column-in_progress', tasks: [] },
+    { id: 'EN_REVISION', title: 'En révision', color: 'column-review', tasks: [] },
+    { id: 'TERMINE', title: 'Terminé', color: 'column-done', tasks: [] },
   ]);
+  
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [selectedColumn, setSelectedColumn] = useState(null);
   const [editingTask, setEditingTask] = useState(null);
@@ -22,71 +29,33 @@ export default function MatiereTasksPage() {
   const [dragOverColumn, setDragOverColumn] = useState(null);
 
   useEffect(() => {
-    fetchMatiereAndTasks();
+    fetchSubjectAndTasks();
   }, [matiereId]);
 
-  const fetchMatiereAndTasks = async () => {
+  const fetchSubjectAndTasks = async () => {
+    setLoading(true);
     try {
-      // Simulation de données
-      const mockMatiere = {
-        id: matiereId,
-        nom: 'Mathématiques',
-        description: 'Algèbre et géométrie avancée',
-        color: '#646cff'
-      };
-      setMatiere(mockMatiere);
+      // Récupérer la matière
+      const subjectResult = await api.get(API_CONFIG.ENDPOINTS.SUBJECTS.BY_ID(matiereId));
+      if (subjectResult.success) {
+        setSubject(subjectResult.data.subject || subjectResult.data);
+      }
 
-      const mockTasks = [
-        {
-          id: 1,
-          titre: 'Exercices de dérivation',
-          description: 'Compléter les exercices 1 à 10 sur les dérivées',
-          priorite: 'HAUTE',
-          date_limite: '2024-12-20',
-          temps_estime: 3,
-          labels: ['urgent', 'devoir'],
-          status: 'todo'
-        },
-        {
-          id: 2,
-          titre: 'Révision intégrales',
-          description: 'Revoir le chapitre sur les intégrales multiples',
-          priorite: 'MOYENNE',
-          date_limite: '2024-12-25',
-          temps_estime: 2,
-          labels: ['révision'],
-          status: 'in_progress'
-        },
-        {
-          id: 3,
-          titre: 'Projet analyse',
-          description: 'Terminer le projet d analyse complexe',
-          priorite: 'BASSE',
-          date_limite: '2024-12-30',
-          temps_estime: 5,
-          labels: ['projet', 'long terme'],
-          status: 'review'
-        },
-        {
-          id: 4,
-          titre: 'Quiz trigonométrie',
-          description: 'Quiz complété avec succès',
-          priorite: 'MOYENNE',
-          date_limite: '2024-12-15',
-          temps_estime: 1,
-          labels: ['quiz'],
-          status: 'done'
-        }
-      ];
-
-      const updatedColumns = columns.map(col => ({
-        ...col,
-        tasks: mockTasks.filter(task => task.status === col.id)
-      }));
-      setColumns(updatedColumns);
-
+      // Récupérer les tâches
+      const tasksResult = await api.get(API_CONFIG.ENDPOINTS.TASKS.BY_SUBJECT(matiereId));
+      if (tasksResult.success) {
+        const tasks = tasksResult.data.tasks || tasksResult.data;
+        
+        // Organiser les tâches par colonne
+        const updatedColumns = columns.map(col => ({
+          ...col,
+          tasks: tasks.filter(task => task.statut === col.id)
+        }));
+        setColumns(updatedColumns);
+      }
     } catch (error) {
       console.error('Error fetching data:', error);
+      showError('Erreur lors du chargement des données');
     } finally {
       setLoading(false);
     }
@@ -107,16 +76,23 @@ export default function MatiereTasksPage() {
   const handleDeleteTask = async (taskId, columnId) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer cette tâche ?')) {
       try {
-        setColumns(
-          columns.map(col =>
-            col.id === columnId
-              ? { ...col, tasks: col.tasks.filter(t => t.id !== taskId) }
-              : col
-          )
-        );
+        const result = await api.del(API_CONFIG.ENDPOINTS.TASKS.DELETE(taskId));
+        
+        if (result.success) {
+          setColumns(
+            columns.map(col =>
+              col.id === columnId
+                ? { ...col, tasks: col.tasks.filter(t => t.id !== taskId) }
+                : col
+            )
+          );
+          showSuccess('Tâche supprimée avec succès');
+        } else {
+          showError('Erreur lors de la suppression');
+        }
       } catch (error) {
         console.error('Error deleting task:', error);
-        alert('Erreur lors de la suppression');
+        showError('Erreur lors de la suppression');
       }
     }
   };
@@ -151,20 +127,31 @@ export default function MatiereTasksPage() {
     if (sourceColumnId === targetColumnId) return;
 
     try {
-      setColumns(
-        columns.map(col => {
-          if (col.id === sourceColumnId) {
-            return { ...col, tasks: col.tasks.filter(t => t.id !== task.id) };
-          }
-          if (col.id === targetColumnId) {
-            return { ...col, tasks: [...col.tasks, { ...task, status: targetColumnId }] };
-          }
-          return col;
-        })
+      // Mettre à jour le statut dans le backend
+      const result = await api.patch(
+        API_CONFIG.ENDPOINTS.TASKS.UPDATE_STATUS(task.id),
+        { statut: targetColumnId }
       );
+
+      if (result.success) {
+        setColumns(
+          columns.map(col => {
+            if (col.id === sourceColumnId) {
+              return { ...col, tasks: col.tasks.filter(t => t.id !== task.id) };
+            }
+            if (col.id === targetColumnId) {
+              return { ...col, tasks: [...col.tasks, { ...task, statut: targetColumnId }] };
+            }
+            return col;
+          })
+        );
+        showSuccess('Statut mis à jour');
+      } else {
+        showError('Erreur lors du déplacement');
+      }
     } catch (error) {
       console.error('Error updating task:', error);
-      alert('Erreur lors du déplacement');
+      showError('Erreur lors du déplacement');
     }
   };
 
@@ -192,8 +179,8 @@ export default function MatiereTasksPage() {
               <ArrowLeft className="w-5 h-5" />
             </button>
             <div className="matiere-info">
-              <h1 className="matiere-title">{matiere?.nom}</h1>
-              <p className="matiere-description">{matiere?.description}</p>
+              <h1 className="matiere-title">{subject?.nom}</h1>
+              <p className="matiere-description">{subject?.description}</p>
             </div>
           </div>
 
@@ -262,7 +249,7 @@ export default function MatiereTasksPage() {
       {/* Modal Tâche */}
       {showTaskModal && (
         <TaskModal
-          matiereId={matiereId}
+          subjectId={matiereId}
           columnId={selectedColumn}
           task={editingTask}
           onClose={() => {
@@ -270,7 +257,7 @@ export default function MatiereTasksPage() {
             setEditingTask(null);
           }}
           onSave={() => {
-            fetchMatiereAndTasks();
+            fetchSubjectAndTasks();
             setShowTaskModal(false);
             setEditingTask(null);
           }}
@@ -361,7 +348,7 @@ function TaskCard({ task, columnId, onDragStart, onDragEnd, onEdit, onDelete }) 
 }
 
 // Composant TaskModal
-function TaskModal({ matiereId, columnId, task, onClose, onSave }) {
+function TaskModal({ subjectId, columnId, task, onClose, onSave }) {
   const [formData, setFormData] = useState({
     titre: task?.titre || '',
     description: task?.description || '',
@@ -369,10 +356,12 @@ function TaskModal({ matiereId, columnId, task, onClose, onSave }) {
     date_limite: task?.date_limite || '',
     temps_estime: task?.temps_estime || '',
     labels: task?.labels?.join(', ') || '',
-    status: task?.status || columnId,
+    statut: task?.statut || columnId,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const api = useAPI();
+  const { showSuccess, showError } = useToast();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -381,16 +370,28 @@ function TaskModal({ matiereId, columnId, task, onClose, onSave }) {
 
     const taskData = {
       ...formData,
-      matiere_id: matiereId,
+      matiere_id: parseInt(subjectId),
       labels: formData.labels.split(',').map(l => l.trim()).filter(Boolean),
+      temps_estime: parseFloat(formData.temps_estime) || null,
     };
 
     try {
-      // Simulation d'appel API
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      onSave();
+      let result;
+      
+      if (task) {
+        result = await api.put(API_CONFIG.ENDPOINTS.TASKS.UPDATE(task.id), taskData);
+      } else {
+        result = await api.post(API_CONFIG.ENDPOINTS.TASKS.CREATE, taskData);
+      }
+      
+      if (result.success) {
+        showSuccess(task ? 'Tâche modifiée avec succès' : 'Tâche créée avec succès');
+        onSave();
+      } else {
+        setError(result.error || 'Erreur lors de la sauvegarde');
+      }
     } catch (err) {
-      setError(err.response?.data?.message || 'Erreur lors de la sauvegarde');
+      setError(err.message || 'Erreur lors de la sauvegarde');
     } finally {
       setLoading(false);
     }

@@ -2,62 +2,38 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Edit, Trash2, Eye, BookOpen } from 'lucide-react';
 import Navbar from '../components/Layout/Navbar';
-//import api from '../services/api';
+import { useAPI } from '../hooks/useApi';
+import { useToast } from '../hooks/useToast';
+import API_CONFIG from '../config/api.config';
 
 import '../styles/Dashboard.css';
 
-
-
 export default function DashboardPage() {
-  const [matieres, setMatieres] = useState([]);
+  const [subjects, setSubjects] = useState([]);
   const [showModal, setShowModal] = useState(false);
-  const [editingMatiere, setEditingMatiere] = useState(null);
+  const [editingSubject, setEditingSubject] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const api = useAPI();
+  const { showSuccess, showError } = useToast();
 
   useEffect(() => {
-    fetchMatieres();
+    fetchSubjects();
   }, []);
 
-  const fetchMatieres = async () => {
+  const fetchSubjects = async () => {
+    setLoading(true);
     try {
-      // Simulation de données pour le développement
-      const mockMatieres = [
-        {
-          id: 1,
-          nom: 'Mathématiques',
-          description: 'Algèbre et géométrie avancée',
-          niveau_difficulte: 'DIFFICILE',
-          color: '#646cff',
-          tasks_count: 8,
-          completed_tasks: 3
-        },
-        {
-          id: 2,
-          nom: 'Physique',
-          description: 'Mécanique et thermodynamique',
-          niveau_difficulte: 'MOYEN',
-          color: '#10b981',
-          tasks_count: 5,
-          completed_tasks: 2
-        },
-        {
-          id: 3,
-          nom: 'Chimie',
-          description: 'Chimie organique et inorganique',
-          niveau_difficulte: 'FACILE',
-          color: '#8b5cf6',
-          tasks_count: 6,
-          completed_tasks: 6
-        }
-      ];
-      setMatieres(mockMatieres);
+      const result = await api.get(API_CONFIG.ENDPOINTS.SUBJECTS.BASE);
       
-      // En production, utilisez l'API réelle :
-      // const response = await api.get('/matieres');
-      // setMatieres(response.data);
+      if (result.success) {
+        setSubjects(result.data.subjects || result.data);
+      } else {
+        showError('Erreur lors du chargement des matières');
+      }
     } catch (error) {
-      console.error('Error fetching matieres:', error);
+      console.error('Error fetching subjects:', error);
+      showError('Erreur lors du chargement des matières');
     } finally {
       setLoading(false);
     }
@@ -66,27 +42,33 @@ export default function DashboardPage() {
   const handleDelete = async (id) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer cette matière ?')) {
       try {
-        // await api.delete(`/matieres/${id}`);
-        setMatieres(matieres.filter(m => m.id !== id));
+        const result = await api.del(API_CONFIG.ENDPOINTS.SUBJECTS.DELETE(id));
+        
+        if (result.success) {
+          setSubjects(subjects.filter(s => s.id !== id));
+          showSuccess('Matière supprimée avec succès');
+        } else {
+          showError('Erreur lors de la suppression');
+        }
       } catch (error) {
-        console.error('Error deleting matiere:', error);
-        alert('Erreur lors de la suppression');
+        console.error('Error deleting subject:', error);
+        showError('Erreur lors de la suppression');
       }
     }
   };
 
-  const handleEdit = (matiere) => {
-    setEditingMatiere(matiere);
+  const handleEdit = (subject) => {
+    setEditingSubject(subject);
     setShowModal(true);
   };
 
   const handleAdd = () => {
-    setEditingMatiere(null);
+    setEditingSubject(null);
     setShowModal(true);
   };
 
-  const handleViewTasks = (matiereId) => {
-    navigate(`/matiere/${matiereId}/tasks`);
+  const handleViewTasks = (subjectId) => {
+    navigate(`/matiere/${subjectId}/tasks`);
   };
 
   if (loading) {
@@ -97,6 +79,10 @@ export default function DashboardPage() {
     );
   }
 
+  // Calculer les statistiques
+  const totalTasks = subjects.reduce((acc, s) => acc + (s.tasks_count || 0), 0);
+  const completedTasks = subjects.reduce((acc, s) => acc + (s.completed_tasks || 0), 0);
+
   return (
     <div className="dashboard-container">
       <Navbar />
@@ -106,7 +92,7 @@ export default function DashboardPage() {
         <div className="dashboard-header">
           <div>
             <h1 className="dashboard-title">Mes Matières</h1>
-            <p className="dashboard-subtitle">Gérez vos matières et leurs tâches</p>
+            <p className="dashboard-subtitle">Gérez vos matières et organisez vos études</p>
           </div>
           <button
             onClick={handleAdd}
@@ -123,7 +109,7 @@ export default function DashboardPage() {
             <div className="stat-card-header">
               <div>
                 <p className="stat-label">Total Matières</p>
-                <p className="stat-value stat-blue">{matieres.length}</p>
+                <p className="stat-value stat-blue">{subjects.length}</p>
               </div>
               <BookOpen className="stat-icon" />
             </div>
@@ -133,9 +119,7 @@ export default function DashboardPage() {
             <div className="stat-card-header">
               <div>
                 <p className="stat-label">Tâches en cours</p>
-                <p className="stat-value stat-orange">
-                  {matieres.reduce((acc, m) => acc + (m.tasks_count || 0), 0)}
-                </p>
+                <p className="stat-value stat-orange">{totalTasks}</p>
               </div>
               <div className="stat-emoji-container emoji-orange">
                 <span className="text-2xl">📝</span>
@@ -147,9 +131,7 @@ export default function DashboardPage() {
             <div className="stat-card-header">
               <div>
                 <p className="stat-label">Tâches complétées</p>
-                <p className="stat-value stat-green">
-                  {matieres.reduce((acc, m) => acc + (m.completed_tasks || 0), 0)}
-                </p>
+                <p className="stat-value stat-green">{completedTasks}</p>
               </div>
               <div className="stat-emoji-container emoji-green">
                 <span className="text-2xl">✅</span>
@@ -159,7 +141,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Liste des matières */}
-        {matieres.length === 0 ? (
+        {subjects.length === 0 ? (
           <div className="empty-state">
             <BookOpen className="empty-icon" />
             <h3 className="empty-title">Aucune matière</h3>
@@ -175,26 +157,26 @@ export default function DashboardPage() {
           </div>
         ) : (
           <div className="matieres-grid">
-            {matieres.map((matiere) => (
+            {subjects.map((subject) => (
               <div
-                key={matiere.id}
+                key={subject.id}
                 className="matiere-card"
               >
                 {/* Header coloré */}
                 <div 
                   className="matiere-header"
                   style={{ 
-                    background: `linear-gradient(135deg, ${matiere.color || '#646cff'} 0%, ${matiere.color || '#535bf2'} 100%)`
+                    background: `linear-gradient(135deg, ${subject.color || '#646cff'} 0%, ${subject.color || '#535bf2'} 100%)`
                   }}
                 >
                   <div className="matiere-header-content">
-                    <h3 className="matiere-name">{matiere.nom}</h3>
+                    <h3 className="matiere-name">{subject.nom}</h3>
                     <div className="matiere-tags">
                       <span className="matiere-tag">
-                        {matiere.tasks_count || 0} tâches
+                        {subject.tasks_count || 0} tâches
                       </span>
                       <span className="matiere-tag">
-                        {matiere.niveau_difficulte || 'Moyen'}
+                        {subject.niveau_difficulte || 'Moyen'}
                       </span>
                     </div>
                   </div>
@@ -203,7 +185,7 @@ export default function DashboardPage() {
                 {/* Contenu */}
                 <div className="matiere-content">
                   <p className="matiere-description">
-                    {matiere.description || 'Aucune description'}
+                    {subject.description || 'Aucune description'}
                   </p>
 
                   {/* Progression */}
@@ -211,7 +193,7 @@ export default function DashboardPage() {
                     <div className="progress-header">
                       <span className="progress-label">Progression</span>
                       <span className="progress-value">
-                        {matiere.completed_tasks || 0}/{matiere.tasks_count || 0}
+                        {subject.completed_tasks || 0}/{subject.tasks_count || 0}
                       </span>
                     </div>
                     <div className="progress-bar">
@@ -219,8 +201,8 @@ export default function DashboardPage() {
                         className="progress-fill"
                         style={{
                           width: `${
-                            matiere.tasks_count
-                              ? (matiere.completed_tasks / matiere.tasks_count) * 100
+                            subject.tasks_count
+                              ? (subject.completed_tasks / subject.tasks_count) * 100
                               : 0
                           }%`,
                         }}
@@ -231,7 +213,7 @@ export default function DashboardPage() {
                   {/* Actions */}
                   <div className="matiere-actions">
                     <button
-                      onClick={() => handleViewTasks(matiere.id)}
+                      onClick={() => handleViewTasks(subject.id)}
                       className="view-button"
                     >
                       <Eye className="w-4 h-4" />
@@ -239,14 +221,14 @@ export default function DashboardPage() {
                     </button>
                     
                     <button
-                      onClick={() => handleEdit(matiere)}
+                      onClick={() => handleEdit(subject)}
                       className="icon-button edit-button"
                     >
                       <Edit className="w-4 h-4" />
                     </button>
                     
                     <button
-                      onClick={() => handleDelete(matiere.id)}
+                      onClick={() => handleDelete(subject.id)}
                       className="icon-button delete-button"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -261,16 +243,16 @@ export default function DashboardPage() {
 
       {/* Modal Ajout/Modification */}
       {showModal && (
-        <MatiereModal
-          matiere={editingMatiere}
+        <SubjectModal
+          subject={editingSubject}
           onClose={() => {
             setShowModal(false);
-            setEditingMatiere(null);
+            setEditingSubject(null);
           }}
           onSave={() => {
-            fetchMatieres();
+            fetchSubjects();
             setShowModal(false);
-            setEditingMatiere(null);
+            setEditingSubject(null);
           }}
         />
       )}
@@ -278,22 +260,20 @@ export default function DashboardPage() {
   );
 }
 
-// ═══════════════════════════════════════════════════════════
-// COMPOSANT : MatiereModal
 // Modal pour ajouter/modifier une matière
-// ═══════════════════════════════════════════════════════════
-
-function MatiereModal({ matiere, onClose, onSave }) {
+function SubjectModal({ subject, onClose, onSave }) {
   const [formData, setFormData] = useState({
-    nom: matiere?.nom || '',
-    description: matiere?.description || '',
-    niveau_difficulte: matiere?.niveau_difficulte || 'MOYEN',
-    color: matiere?.color || '#646cff',
-    duree_totale_heures: matiere?.duree_totale_heures || 0,
-    priorite: matiere?.priorite || 5,
+    nom: subject?.nom || '',
+    description: subject?.description || '',
+    niveau_difficulte: subject?.niveau_difficulte || 'MOYEN',
+    color: subject?.color || '#646cff',
+    duree_totale_heures: subject?.duree_totale_heures || 0,
+    priorite: subject?.priorite || 5,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const api = useAPI();
+  const { showSuccess, showError } = useToast();
 
   const colors = [
     { name: 'Bleu', value: '#646cff' },
@@ -310,19 +290,22 @@ function MatiereModal({ matiere, onClose, onSave }) {
     setError('');
 
     try {
-      // Simulation d'appel API
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      let result;
       
-      // En production, utilisez l'API réelle :
-      // if (matiere) {
-      //   await api.put(`/matieres/${matiere.id}`, formData);
-      // } else {
-      //   await api.post('/matieres', formData);
-      // }
+      if (subject) {
+        result = await api.put(API_CONFIG.ENDPOINTS.SUBJECTS.UPDATE(subject.id), formData);
+      } else {
+        result = await api.post(API_CONFIG.ENDPOINTS.SUBJECTS.CREATE, formData);
+      }
       
-      onSave();
+      if (result.success) {
+        showSuccess(subject ? 'Matière modifiée avec succès' : 'Matière créée avec succès');
+        onSave();
+      } else {
+        setError(result.error || 'Erreur lors de la sauvegarde');
+      }
     } catch (err) {
-      setError(err.response?.data?.message || 'Erreur lors de la sauvegarde');
+      setError(err.message || 'Erreur lors de la sauvegarde');
     } finally {
       setLoading(false);
     }
@@ -333,7 +316,7 @@ function MatiereModal({ matiere, onClose, onSave }) {
       <div className="modal-content">
         <div className="modal-header">
           <h2 className="modal-title">
-            {matiere ? 'Modifier la matière' : 'Nouvelle matière'}
+            {subject ? 'Modifier la matière' : 'Nouvelle matière'}
           </h2>
         </div>
 
@@ -432,7 +415,7 @@ function MatiereModal({ matiere, onClose, onSave }) {
               disabled={loading}
               className="save-button"
             >
-              {loading ? 'Enregistrement...' : matiere ? 'Modifier' : 'Créer'}
+              {loading ? 'Enregistrement...' : subject ? 'Modifier' : 'Créer'}
             </button>
           </div>
         </form>

@@ -212,7 +212,7 @@ export default function Landing() {
   const pricingPlans = [
     {
       name: 'Starter',
-      price: '0€',
+      price: '0DT',
       period: 'pour toujours',
       description: 'Parfait pour les petites équipes',
       features: [
@@ -230,7 +230,7 @@ export default function Landing() {
     },
     {
       name: 'Pro',
-      price: '15€',
+      price: '15DT',
       period: 'par mois',
       description: 'Pour les équipes en croissance',
       features: [
@@ -249,7 +249,7 @@ export default function Landing() {
     },
     {
       name: 'Enterprise',
-      price: '29€',
+      price: '29DT',
       period: 'par mois',
       description: 'Pour les organisations',
       features: [
