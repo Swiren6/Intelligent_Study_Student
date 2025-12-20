@@ -2,17 +2,21 @@
 @import "tailwindcss";
 @reference "tailwindcss/utilities";
 
+
 .input-wrapper {
   @apply w-full mb-4;
 }
+
 
 .input-container {
   @apply relative w-full;
 }
 
+
 .input-container.has-error .auth-input {
   @apply border-red-500 focus:ring-red-500;
 }
+
 
 .input-icon {
   @apply absolute left-4 top-1/2 transform -translate-y-1/2 text-lg pointer-events-none;
@@ -26,13 +30,15 @@
   @apply text-red-500 text-sm mt-1 block;
 }
 
-/* Animation d'erreur */
+
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
   25% { transform: translateX(-10px); }
   75% { transform: translateX(10px); }
 }
 
+
 .input-container.has-error {
   animation: shake 0.3s ease-in-out;
 }
+

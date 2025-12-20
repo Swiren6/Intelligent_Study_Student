@@ -78,12 +78,12 @@ const API_CONFIG = {
     
     // Schedules
     SCHEDULES: {
-      BASE: '/schedules',
-      BY_ID: (id) => `/schedules/${id}`,
-      CREATE: '/schedules',
-      UPDATE: (id) => `/schedules/${id}`,
-      DELETE: (id) => `/schedules/${id}`,
-      BY_USER: '/schedules/user',
+      LIST: '/api/emplois-du-temps/utilisateur',
+      UPLOAD: '/api/emplois-du-temps/upload',
+      DELETE: '/api/emplois-du-temps',
+      COURSES: '/api/emplois-du-temps',
+      ANALYZE: '/api/services/analyser-pdf',
+      FREE_SLOTS: '/api/services/creneaux-libres'
     },
     
     // Courses
