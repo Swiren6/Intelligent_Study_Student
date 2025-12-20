@@ -3,6 +3,7 @@ import { LogOut, User, Settings, Bell, Search, CheckCircle } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react';
 
 import '../../styles/navbar.css';
+import ThemeToggle from '../UI/ThemeToggle';
 
 export default function Navbar() {
   const navigate = useNavigate();
@@ -258,6 +259,7 @@ export default function Navbar() {
           }}
         />
       )}
+      <ThemeToggle />
     </nav>
   );
 }

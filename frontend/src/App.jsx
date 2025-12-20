@@ -5,6 +5,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import "./App.css";
 import { AuthProvider } from "./context/AuthContext";
 import { ToastProvider } from "./context/ToastContext";
+import ScheduleUploadPage from './pages/ScheduleUploadPage';
 
 import Loader from "./components/common/Loader";
 
@@ -28,6 +29,7 @@ function App() {
               <Route path="/" element={<Landing />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<SignUp />} />
+              <Route path="/schedule/upload" element={<ScheduleUploadPage />} />
               <Route
                 path="/dashboard"
                 element={

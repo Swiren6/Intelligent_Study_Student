@@ -324,6 +324,7 @@ def get_sessions_aujourdhui(id, current_user):
 
 @bp.route('/<int:id>/sessions/semaine', methods=['GET'])
 @jwt_required_custom
+
 def get_sessions_semaine(id, current_user):
     """Récupère les sessions de cette semaine pour un planning"""
     try:
@@ -345,6 +346,7 @@ def get_sessions_semaine(id, current_user):
 
 @bp.route('/<int:id>/statistiques', methods=['GET'])
 @jwt_required_custom
+
 def get_planning_statistiques(id, current_user):
     """Récupère les statistiques d'un planning"""
     try:
@@ -361,6 +363,7 @@ def get_planning_statistiques(id, current_user):
 
 @bp.route('/actifs', methods=['GET'])
 @jwt_required_custom
+
 def get_plannings_actifs(current_user):
     """Récupère les plannings actifs de l'utilisateur"""
     try:
