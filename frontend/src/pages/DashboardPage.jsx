@@ -13,19 +13,17 @@ import {
   AlertCircle,
   Award,
   Target,
-  Clock3,
-  CalendarDays,
-  CalendarRange,
   ChevronRight,
-  AlertTriangle,
+  Bell,
+  Menu,
+  X,
 } from 'lucide-react';
 
 const DashboardPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { success } = useToast();
-  
-  // États initiaux
+
   const [stats, setStats] = useState({
     matieres: 7,
     taches: 12,
@@ -33,495 +31,207 @@ const DashboardPage = () => {
     plannings: 2,
     tempsEtudie: 24.5,
     tempsEstime: 40,
-    examensProchains: 4,
   });
 
-  const [recentActivities, setRecentActivities] = useState([
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [progressAnimations, setProgressAnimations] = useState({});
+
+  const [recentActivities] = useState([
     {
       id: 1,
-      type: 'tache',
       title: 'TP Machine Learning terminé',
       time: 'Il y a 2 heures',
       status: 'completed',
+      icon: CheckSquare,
     },
     {
       id: 2,
-      type: 'matiere',
       title: 'Nouvelle matière ajoutée: React',
       time: 'Il y a 5 heures',
       status: 'new',
+      icon: BookOpen,
     },
     {
       id: 3,
-      type: 'planning',
       title: 'Planning de la semaine généré',
       time: 'Hier',
       status: 'info',
+      icon: Calendar,
+    },
+    {
+      id: 4,
+      title: 'Certification Python obtenue',
+      time: 'Il y a 3 jours',
+      status: 'completed',
+      icon: Award,
     },
   ]);
 
-  const [urgentTasks, setUrgentTasks] = useState([
+  const [urgentTasks] = useState([
     {
       id: 1,
       title: 'Projet Django REST API',
       matiere: 'Django',
       deadline: '2 jours',
-      progress: 35,
+      progress: 0,
+      targetProgress: 35,
       color: '#F59E0B',
+      priority: 'high',
     },
     {
       id: 2,
       title: 'Révision ML/DL chapitres 1-3',
       matiere: 'Machine Learning',
       deadline: '5 jours',
-      progress: 65,
+      progress: 0,
+      targetProgress: 65,
       color: '#8B5CF6',
+      priority: 'medium',
     },
     {
       id: 3,
       title: 'Projet React Dashboard',
       matiere: 'React',
       deadline: '7 jours',
-      progress: 50,
+      progress: 0,
+      targetProgress: 50,
       color: '#61DAFB',
-    },
-  ]);
-
-  // Nouvel état pour les examens
-  const [upcomingExams, setUpcomingExams] = useState([
-    {
-      id: 1,
-      title: 'Examen Final - Machine Learning',
-      matiere: 'Machine Learning',
-      date: '2024-06-15',
-      time: '09:00',
-      duration: '3h',
-      type: 'examen',
-      importance: 'high',
-      location: 'Salle A201',
-      professor: 'Dr. Martin',
-      color: '#EF4444',
-      joursRestants: 14,
-    },
-    {
-      id: 2,
-      title: 'Examen Partiel - Base de données',
-      matiere: 'Base de données',
-      date: '2024-06-08',
-      time: '14:00',
-      duration: '2h',
-      type: 'partiel',
-      importance: 'medium',
-      location: 'Amphi B',
-      professor: 'Prof. Dubois',
-      color: '#3B82F6',
-      joursRestants: 7,
-    },
-    {
-      id: 3,
-      title: 'Quiz - React Avancé',
-      matiere: 'React',
-      date: '2024-06-03',
-      time: '10:30',
-      duration: '1h30',
-      type: 'quiz',
-      importance: 'low',
-      location: 'Salle C105',
-      professor: 'Mme. Laurent',
-      color: '#10B981',
-      joursRestants: 2,
-    },
-    {
-      id: 4,
-      title: 'Oral - Anglais Technique',
-      matiere: 'Anglais',
-      date: '2024-06-20',
-      time: '16:00',
-      duration: '30min',
-      type: 'oral',
-      importance: 'medium',
-      location: 'Bureau 304',
-      professor: 'Mr. Smith',
-      color: '#8B5CF6',
-      joursRestants: 19,
+      priority: 'low',
     },
   ]);
 
   useEffect(() => {
-    // Afficher un message de bienvenue
     success(`Bienvenue ${user?.nom || 'étudiant'} ! 👋`);
 
-    // TODO: Charger les vraies données depuis l'API
-    // fetchDashboardStats();
-    
-    // Mettre à jour les jours restants chaque jour
-    const updateDaysRemaining = () => {
-      setUpcomingExams(prevExams => 
-        prevExams.map(exam => ({
-          ...exam,
-          joursRestants: calculateDaysRemaining(exam.date)
-        }))
-      );
-    };
-    
-    updateDaysRemaining();
-    
-    // Mettre à jour à minuit chaque jour
-    const now = new Date();
-    const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0);
-    const timeUntilMidnight = midnight.getTime() - now.getTime();
-    
-    const midnightTimer = setTimeout(() => {
-      updateDaysRemaining();
-      // Ensuite, mettre à jour toutes les 24h
-      setInterval(updateDaysRemaining, 24 * 60 * 60 * 1000);
-    }, timeUntilMidnight);
-    
-    return () => clearTimeout(midnightTimer);
+    const timer = setTimeout(() => {
+      setLoading(false);
+      urgentTasks.forEach((task, index) => {
+        setTimeout(() => {
+          animateProgress(task.id, task.targetProgress);
+        }, 300 * (index + 1));
+      });
+    }, 1000);
+
+    return () => clearTimeout(timer);
   }, []);
 
-  // Fonction pour calculer les jours restants
-  const calculateDaysRemaining = (examDate) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    const exam = new Date(examDate);
-    exam.setHours(0, 0, 0, 0);
-    
-    const diffTime = exam - today;
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    return diffDays;
+  const animateProgress = (taskId, target) => {
+    let current = 0;
+    const step = target / 20;
+    const interval = setInterval(() => {
+      current += step;
+      if (current >= target) {
+        current = target;
+        clearInterval(interval);
+      }
+      setProgressAnimations((prev) => ({ ...prev, [taskId]: current }));
+    }, 30);
   };
 
-  // Fonction pour formater la date
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('fr-FR', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric'
-    });
-  };
-
-  // Fonction pour obtenir le type d'examen
-  const getExamTypeLabel = (type) => {
-    switch(type) {
-      case 'examen': return 'Examen Final';
-      case 'partiel': return 'Examen Partiel';
-      case 'quiz': return 'Quiz';
-      case 'oral': return 'Examen Oral';
-      default: return 'Examen';
-    }
-  };
-
-  // Fonction pour obtenir la couleur d'importance
-  const getImportanceColor = (importance) => {
-    switch(importance) {
-      case 'high': return 'bg-red-100 text-red-800 border-red-200';
-      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'low': return 'bg-green-100 text-green-800 border-green-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
-
-  const handleViewAllExams = () => {
-    navigate('/dashboard/calendarPage');
-  };
-
-  const handleViewExamDetails = (examId) => {
-    navigate(`/dashboard/exams/${examId}`);
-  };
-
-  const StatCard = ({ icon: Icon, title, value, subtitle, color, trend }) => (
-    <div className="stat-card">
-      <div className="flex items-center justify-between mb-4">
-        <div className={`stat-icon-container ${color}`}>
-          <Icon className={`stat-icon ${color}`} />
-        </div>
-        {trend !== undefined && (
-          <span className={trend > 0 ? 'trend-positive' : 'trend-negative'}>
-            {trend > 0 ? '+' : ''}{trend}%
-          </span>
-        )}
-      </div>
-      <h3 className="stat-value">{value}</h3>
-      <p className="stat-title">{title}</p>
-      {subtitle && (
-        <p className="stat-subtitle">{subtitle}</p>
-      )}
-    </div>
-  );
-
-  const ProgressBar = ({ progress, color }) => (
-    <div className="progress-bar-container">
+  const ProgressBar = ({ taskId, color }) => (
+    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
       <div
-        className="progress-bar-fill"
+        className="h-2 rounded-full transition-all duration-300"
         style={{
-          width: `${progress}%`,
+          width: `${Math.round(progressAnimations[taskId] || 0)}%`,
           backgroundColor: color,
         }}
       />
     </div>
   );
 
-  const getActivityIcon = (type) => {
-    switch (type) {
-      case 'tache':
-        return CheckSquare;
-      case 'matiere':
-        return BookOpen;
-      case 'planning':
-        return Calendar;
-      case 'examen':
-        return Award;
-      default:
-        return TrendingUp;
-    }
-  };
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <p className="text-gray-500">Chargement du dashboard…</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="dashboard-container">
-      { <Sidebar />}
+    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className={`fixed lg:relative z-50 ${sidebarOpen ? 'block' : 'hidden'} lg:block`}>
+        <Sidebar />
+      </div>
 
-      {/* Main Content */}
-      <main className="dashboard-main">
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      <main className="flex-1 p-4 lg:p-8">
         {/* Header */}
-        <div className="dashboard-header mb-8">
-          <h1 className="text-3xl font-bold">Tableau de bord</h1>
-          <p>
-            Bienvenue, {user?.nom || 'étudiant'} ! Voici un aperçu de vos études.
-          </p>
-        </div>
-
-        {/* Stats Grid */}
-        <div className="stats-grid">
-          <StatCard
-            icon={BookOpen}
-            title="Matières actives"
-            value={stats.matieres}
-            subtitle="7 matières ce semestre"
-            color="blue"
-            trend={12}
-          />
-          <StatCard
-            icon={CheckSquare}
-            title="Tâches en cours"
-            value={`${stats.tachesCompletees}/${stats.taches}`}
-            subtitle={`${Math.round((stats.tachesCompletees / stats.taches) * 100)}% complétées`}
-            color="green"
-            trend={8}
-          />
-          <StatCard
-            icon={Award}
-            title="Examens prochains"
-            value={stats.examensProchains}
-            subtitle={`${upcomingExams.filter(e => e.joursRestants <= 7).length} dans les 7 jours`}
-            color="red"
-          />
-          <StatCard
-            icon={Clock}
-            title="Temps d'étude"
-            value={`${stats.tempsEtudie}h`}
-            subtitle={`${stats.tempsEstime}h estimées`}
-            color="orange"
-            trend={-5}
-          />
-        </div>
-
-        {/* Three Columns Layout */}
-        <div className="three-columns-grid">
-          {/* Tâches urgentes */}
-          <div className="card">
-            <div className="card-header">
-              <h2 className="card-title">
-                <AlertCircle className="card-icon text-red-500" />
-                Tâches urgentes
-              </h2>
-              <button 
-                className="text-sm text-blue-600 dark:text-blue-400 hover:underline" 
-                onClick={() => navigate('/dashboard/tasks')}
-              >
-                Voir tout
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              {urgentTasks.map((task) => (
-                <div key={task.id} className="task-item">
-                  <div className="task-header">
-                    <div>
-                      <h3 className="task-title">{task.title}</h3>
-                      <div className="task-meta">
-                        <span
-                          className="task-color-dot"
-                          style={{ backgroundColor: task.color }}
-                        />
-                        <span>{task.matiere}</span>
-                        <span>•</span>
-                        <span className="text-red-600">
-                          Dans {task.deadline}
-                        </span>
-                      </div>
-                    </div>
-                    <span className="task-progress">{task.progress}%</span>
-                  </div>
-                  <ProgressBar progress={task.progress} color={task.color} />
-                </div>
-              ))}
+        <div className="flex justify-between items-center mb-8">
+          <div className="flex items-center gap-3">
+            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="lg:hidden">
+              {sidebarOpen ? <X /> : <Menu />}
+            </button>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                Tableau de bord
+              </h1>
+              <p className="text-gray-500">
+                Bon retour, <b>{user?.nom || 'étudiant'}</b>
+              </p>
             </div>
           </div>
+          <Bell className="w-5 h-5 text-gray-600" />
+        </div>
 
-          {/* Calendrier des examens */}
-          <div className="card">
-            <div className="card-header">
-              <h2 className="card-title">
-                <CalendarDays className="card-icon text-purple-500" />
-                Calendrier des examens
-              </h2>
-              <button 
-                className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
-                onClick={handleViewAllExams}
-              >
-                Voir tout
-              </button>
-            </div>
+        {/* Stats */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Stat label="Matières" value={stats.matieres} icon={BookOpen} />
+          <Stat label="Tâches" value={`${stats.tachesCompletees}/${stats.taches}`} icon={CheckSquare} />
+          <Stat label="Plannings" value={stats.plannings} icon={Calendar} />
+          <Stat label="Temps d'étude" value={`${stats.tempsEtudie}h`} icon={Clock} />
+        </div>
 
-            <div className="space-y-4">
-              {upcomingExams
-                .sort((a, b) => new Date(a.date) - new Date(b.date))
-                .slice(0, 4) // Afficher seulement les 4 prochains
-                .map((exam) => (
-                  <div 
-                    key={exam.id} 
-                    className="exam-item"
-                    onClick={() => handleViewExamDetails(exam.id)}
-                  >
-                    <div className="exam-header">
-                      <div className="exam-date-indicator" style={{ backgroundColor: exam.color }}>
-                        <span className="exam-day">{new Date(exam.date).getDate()}</span>
-                        <span className="exam-month">
-                          {new Date(exam.date).toLocaleDateString('fr-FR', { month: 'short' })}
-                        </span>
-                      </div>
-                      <div className="exam-info">
-                        <h3 className="exam-title">{exam.title}</h3>
-                        <div className="exam-meta">
-                          <span className="exam-matiere">{exam.matiere}</span>
-                          <span className="exam-separator">•</span>
-                          <span className="exam-time">{exam.time} • {exam.duration}</span>
-                          <span className="exam-separator">•</span>
-                          <span className="exam-location">{exam.location}</span>
-                        </div>
-                      </div>
-                      <div className="exam-actions">
-                        <span className={`exam-importance ${getImportanceColor(exam.importance)}`}>
-                          {exam.importance === 'high' ? 'Haute' : exam.importance === 'medium' ? 'Moyenne' : 'Basse'}
-                        </span>
-                        <ChevronRight className="w-4 h-4 text-gray-400" />
-                      </div>
-                    </div>
-                    <div className="exam-footer">
-                      <div className="exam-days-left">
-                        <AlertTriangle className={`w-4 h-4 ${exam.joursRestants <= 3 ? 'text-red-500' : exam.joursRestants <= 7 ? 'text-yellow-500' : 'text-green-500'}`} />
-                        <span className={`font-semibold ${exam.joursRestants <= 3 ? 'text-red-600' : exam.joursRestants <= 7 ? 'text-yellow-600' : 'text-green-600'}`}>
-                          {exam.joursRestants === 0 ? "Aujourd'hui" : 
-                           exam.joursRestants === 1 ? "Demain" : 
-                           `Dans ${exam.joursRestants} jours`}
-                        </span>
-                      </div>
-                      <span className="exam-type">{getExamTypeLabel(exam.type)}</span>
-                    </div>
-                  </div>
-                ))}
-            </div>
+        {/* Urgent tasks */}
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl">
+          <h2 className="text-xl font-bold mb-4 flex items-center">
+            <AlertCircle className="text-red-500 mr-2" /> Tâches urgentes
+          </h2>
 
-            {/* Prochain examen */}
-            {upcomingExams.length > 0 && (
-              <div className="next-exam-highlight">
-                <div className="next-exam-header">
-                  <h3 className="next-exam-title">Prochain examen</h3>
-                  <div className="next-exam-date">
-                    {formatDate(upcomingExams[0].date)}
-                  </div>
+          <div className="space-y-4">
+            {urgentTasks.map((task) => (
+              <div key={task.id} className="p-4 border rounded-lg">
+                <div className="flex justify-between mb-2">
+                  <h3 className="font-semibold">{task.title}</h3>
+                  <span>{Math.round(progressAnimations[task.id] || 0)}%</span>
                 </div>
-                <div className="next-exam-details">
-                  <div className="next-exam-info">
-                    <h4 className="next-exam-name">{upcomingExams[0].title}</h4>
-                    <p className="next-exam-description">
-                      {upcomingExams[0].matiere} • {upcomingExams[0].professor}
-                    </p>
-                    <div className="next-exam-time">
-                      <Clock3 className="w-4 h-4" />
-                      <span>{upcomingExams[0].time} • {upcomingExams[0].duration}</span>
-                    </div>
-                  </div>
-                  <button 
-                    className="next-exam-button"
-                    onClick={() => handleViewExamDetails(upcomingExams[0].id)}
-                  >
-                    Détails
-                  </button>
-                </div>
+                <ProgressBar taskId={task.id} color={task.color} />
               </div>
-            )}
-          </div>
-
-          {/* Activité récente */}
-          <div className="card">
-            <h2 className="card-title mb-6">
-              <TrendingUp className="card-icon text-blue-500" />
-              Activité récente
-            </h2>
-
-            <div className="space-y-4">
-              {recentActivities.map((activity) => {
-                const ActivityIcon = getActivityIcon(activity.type);
-                return (
-                  <div key={activity.id} className="activity-item">
-                    <div className={`activity-icon-container ${activity.status}`}>
-                      <ActivityIcon className={`activity-icon ${activity.status}`} />
-                    </div>
-                    <div className="activity-content">
-                      <p className="activity-title">{activity.title}</p>
-                      <p className="activity-time">{activity.time}</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            ))}
           </div>
         </div>
 
-        {/* Quick Actions */}
-        <div className="quick-actions-grid">
-          <button 
-            className="action-button blue" 
-            onClick={() => navigate('/dashboard/CreateTaskForm')}
-          >
-            <Target className="action-icon" />
-            <span>Nouvelle tâche</span>
-          </button>
-          <button 
-            className="action-button green"
-            onClick={() => navigate('/dashboard/plannings/new')}
-          >
-            <Calendar className="action-icon" />
-            <span>Créer planning</span>
-          </button>
-          <button 
-            className="action-button purple"
-            onClick={() => navigate('/dashboard/subjects/new')}
-          >
-            <BookOpen className="action-icon" />
-            <span>Ajouter matière</span>
-          </button>
+        {/* Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+          <Action icon={Target} label="Nouvelle tâche" />
+          <Action icon={Calendar} label="Créer planning" />
+          <Action icon={BookOpen} label="Ajouter matière" />
         </div>
       </main>
     </div>
   );
 };
 
+const Stat = ({ icon: Icon, label, value }) => (
+  <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow">
+    <Icon className="mb-2 text-blue-500" />
+    <p className="text-sm text-gray-500">{label}</p>
+    <p className="text-xl font-bold">{value}</p>
+  </div>
+);
+
+const Action = ({ icon: Icon, label }) => (
+  <button className="p-4 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 text-white flex items-center justify-center gap-2">
+    <Icon className="w-5 h-5" />
+    {label}
+  </button>
+);
 
 export default DashboardPage;
