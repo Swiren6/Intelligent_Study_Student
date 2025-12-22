@@ -93,6 +93,8 @@ import MatiereTasksPage from './pages/MatiereTasksPage';
 import PlanningGeneratorPage from './pages/PlanningGeneratorPage';
 import StudySessionPage from './pages/StudySessionPage';
 import StatisticsPage from './pages/StatisticsPage';
+import Profile from './pages/Profile';
+
 
 function App() {
   return (
@@ -114,19 +116,20 @@ function App() {
               } 
             />
             <Route path="/dashboard/matieres" element={<ProtectedRoute><div>Matières</div></ProtectedRoute>} />
-            <Route path="/dashboard/taches" element={<ProtectedRoute><div>Tâches</div></ProtectedRoute>} />
-            <Route path="/dashboard/planning" element={<ProtectedRoute><div>Planning</div></ProtectedRoute>} />
+         
             <Route path="/dashboard/emploi-temps" element={<ProtectedRoute><div>Emploi du temps</div></ProtectedRoute>} />
             <Route path="/dashboard/notifications" element={<ProtectedRoute><div>Notifications</div></ProtectedRoute>} />
             <Route path="/dashboard/stats" element={<ProtectedRoute><div>Statistiques</div></ProtectedRoute>} />
-            <Route path="/dashboard/profile" element={<ProtectedRoute><div>Profil</div></ProtectedRoute>} />
+            
             <Route path="/dashboard/settings" element={<ProtectedRoute><div>Paramètres</div></ProtectedRoute>} />
             <Route path="/dashboard/tasks" element={<ProtectedRoute><MatiereTasksPage/></ProtectedRoute>} />
             <Route path="/dashboard/CreateTaskForm" element={<ProtectedRoute><CreateTaskForm/></ProtectedRoute>} />
             <Route path="/dashboard/calendarPage" element={<ProtectedRoute><CalendarPage /></ProtectedRoute>} />
-            <Route path="/dashboard/planning-generator" element={<ProtectedRoute><PlanningGeneratorPage /></ProtectedRoute>} />
+            <Route path="/dashboard/planning" element={<ProtectedRoute><PlanningGeneratorPage /></ProtectedRoute>} />
             <Route path="/dashboard/study-session" element={<ProtectedRoute><StudySessionPage /></ProtectedRoute>} />
             <Route path="/dashboard/statistics" element={<ProtectedRoute><StatisticsPage /></ProtectedRoute>} />
+            <Route path="/dashboard/Profile" element={<ProtectedRoute><Profile/></ProtectedRoute>} />
+           
 
             
             

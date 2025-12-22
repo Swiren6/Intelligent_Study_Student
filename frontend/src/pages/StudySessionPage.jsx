@@ -4,9 +4,10 @@ import {
   BookOpen, Target, Coffee, Brain, Star,
   SkipForward, AlertCircle
 } from 'lucide-react';
-import Navbar from '../components/Layout/Navbar';
+import Navbar from '../components/Dashboard/Navbar';
 import { useToast } from '../context/ToastContext';
 import '../styles/study-session.css';
+import Sidebar from '../components/Dashboard/Sidebar';
 
 export default function StudySessionPage() {
   const { showSuccess, showInfo } = useToast();
@@ -166,6 +167,7 @@ export default function StudySessionPage() {
   return (
     <div className="study-session-page">
       <Navbar />
+      <Sidebar></Sidebar>
 
       <main className="session-container">
         <div className="session-header">

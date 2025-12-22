@@ -3,6 +3,8 @@ import { useState } from 'react';
 import API_CONFIG from '../config/api.config';
 import { useToast } from '../context/ToastContext';
 import '../styles/create-task-form.css'; // Import du CSS
+import Navbar from '../components/Dashboard/Navbar';
+import Sidebar from '../components/Dashboard/Sidebar';
 
 export default function CreateTaskForm({ matiereId, userId, onSuccess, onCancel }) {
   const { showSuccess, showError } = useToast();
@@ -77,7 +79,11 @@ export default function CreateTaskForm({ matiereId, userId, onSuccess, onCancel 
   };
 
   return (
+
+    
     <div className="create-task-form-container">
+        <Navbar></Navbar>
+        <Sidebar></Sidebar>
       <div className="form-header">
         <h2>Créer une nouvelle tâche</h2>
         <p>Remplissez les informations ci-dessous pour créer une nouvelle tâche</p>

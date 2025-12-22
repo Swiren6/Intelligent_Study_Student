@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useNavigate } from 'react-router-dom';
-import Sidebar from '../components/Dashboard/Sidebar';
+
 import '../styles/dashboard.css';
 import {
   BookOpen,
@@ -18,7 +18,14 @@ import {
   CalendarRange,
   ChevronRight,
   AlertTriangle,
+  
 } from 'lucide-react';
+import Navbar from '../components/Dashboard/Navbar';
+import Sidebar from '../components/Dashboard/Sidebar.jsx';
+
+
+
+
 
 const DashboardPage = () => {
   const navigate = useNavigate();
@@ -283,7 +290,9 @@ const DashboardPage = () => {
 
   return (
     <div className="dashboard-container">
-      {/* <Sidebar /> */}
+     
+    <Navbar></Navbar>
+      <Sidebar></Sidebar>
 
       {/* Main Content */}
       <main className="dashboard-main">

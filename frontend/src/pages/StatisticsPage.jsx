@@ -4,8 +4,9 @@ import {
   Calendar, BookOpen, Award, Activity,
   BarChart3, PieChart, Download
 } from 'lucide-react';
-import Navbar from '../components/Layout/Navbar';
+import Navbar from '../components/Dashboard/Navbar';
 import '../styles/statistics.css';
+import Sidebar from '../components/Dashboard/Sidebar';
 
 export default function StatisticsPage() {
   const [periode, setPeriode] = useState('semaine');
@@ -74,10 +75,13 @@ export default function StatisticsPage() {
 
   if (loading) {
     return (
+      
       <div className="statistics-page">
-        <Navbar />
+          <Sidebar />
         <div className="loading-container">
+             <Navbar />
           <div className="loading-spinner" />
+            
         </div>
       </div>
     );
@@ -86,6 +90,7 @@ export default function StatisticsPage() {
   return (
     <div className="statistics-page">
       <Navbar />
+      <Sidebar />
 
       <main className="statistics-container">
         {/* Header */}
