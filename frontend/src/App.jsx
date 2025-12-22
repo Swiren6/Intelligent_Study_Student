@@ -85,8 +85,11 @@ import Login from './components/Auth/Login';
 import SignUp from './components/Auth/SignUp';
 import DashboardPage from './pages/DashboardPage';
 import ProtectedRoute from './components/common/ProtectedRoute';
+import CreateTaskForm from './pages/CreateTaskForm';
+import CalendarPage from './pages/CalendarPage';
 
 import './styles/dashboard.css';
+import MatiereTasksPage from './pages/MatiereTasksPage';
 
 function App() {
   return (
@@ -97,6 +100,8 @@ function App() {
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<SignUp />} />
+            
+
             <Route 
               path="/dashboard" 
               element={
@@ -113,6 +118,11 @@ function App() {
             <Route path="/dashboard/stats" element={<ProtectedRoute><div>Statistiques</div></ProtectedRoute>} />
             <Route path="/dashboard/profile" element={<ProtectedRoute><div>Profil</div></ProtectedRoute>} />
             <Route path="/dashboard/settings" element={<ProtectedRoute><div>Paramètres</div></ProtectedRoute>} />
+            <Route path="/dashboard/tasks" element={<ProtectedRoute><MatiereTasksPage/></ProtectedRoute>} />
+            <Route path="/dashboard/CreateTaskForm" element={<ProtectedRoute><CreateTaskForm/></ProtectedRoute>} />
+            <Route path="/dashboard/calendarPage" element={<ProtectedRoute><CalendarPage /></ProtectedRoute>} />
+            
+            
           </Routes>
         </ToastProvider>
       </AuthProvider>

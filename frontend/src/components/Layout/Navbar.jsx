@@ -105,7 +105,7 @@ export default function Navbar() {
             <span className="logo-icon">📚</span>
           </div>
           <div className="brand-text">
-            <h1 className="brand-title">StudyFlow</h1>
+            <h1 className="brand-title">Taskora</h1>
             <p className="brand-subtitle">Gestion des études</p>
           </div>
         </div>
