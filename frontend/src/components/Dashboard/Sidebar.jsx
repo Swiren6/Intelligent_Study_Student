@@ -8,15 +8,13 @@ import {
   Users,
   Settings,
   LogOut,
-  ChevronLeft,
-  ChevronRight,
   HelpCircle,
   FileText,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 
-const Sidebar = ({ open, onClose }) => {
+const Sidebar = () => {
   const { user, logout } = useAuth();
   const { success } = useToast();
 
@@ -49,8 +47,12 @@ const Sidebar = ({ open, onClose }) => {
             <BookOpen className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">StudyPro</h1>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Dashboard académique</p>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+              StudyPro
+            </h1>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Dashboard académique
+            </p>
           </div>
         </div>
       </div>
@@ -68,21 +70,20 @@ const Sidebar = ({ open, onClose }) => {
               }`}
             >
               <div className="flex items-center space-x-3">
-                <div className={`p-2 rounded-lg transition-all ${
-                  item.active 
-                    ? 'bg-white dark:bg-gray-800 shadow-sm'
-                    : 'group-hover:bg-white dark:group-hover:bg-gray-800'
-                }`}>
+                <div
+                  className={`p-2 rounded-lg ${
+                    item.active
+                      ? 'bg-white dark:bg-gray-800 shadow-sm'
+                      : 'group-hover:bg-white dark:group-hover:bg-gray-800'
+                  }`}
+                >
                   <item.icon className="w-4 h-4" />
                 </div>
                 <span className="font-medium">{item.label}</span>
               </div>
+
               {item.badge && (
-                <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
-                  item.active
-                    ? 'bg-blue-100 dark:bg-blue-800 text-blue-600 dark:text-blue-300'
-                    : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-                }`}>
+                <span className="text-xs font-semibold px-2 py-1 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
                   {item.badge}
                 </span>
               )}
@@ -126,11 +127,9 @@ const Sidebar = ({ open, onClose }) => {
 
         <button
           onClick={handleLogout}
-          className="w-full flex items-center space-x-3 p-3 rounded-xl text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200 group"
+          className="w-full flex items-center space-x-3 p-3 rounded-xl text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200"
         >
-          <div className="p-2 rounded-lg bg-red-50 dark:bg-red-900/30 group-hover:scale-110 transition-transform">
-            <LogOut className="w-4 h-4" />
-          </div>
+          <LogOut className="w-4 h-4" />
           <span className="font-medium">Déconnexion</span>
         </button>
       </div>
