@@ -1,0 +1,186 @@
+from app import db
+from datetime import datetime
+
+
+class EmploiDuTemps(db.Model):
+    """Modèle représentant un emploi du temps importé"""
+    
+    __tablename__ = 'emplois_du_temps'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    
+    # Informations du fichier
+    nom_fichier = db.Column(db.String(255), nullable=False)
+    fichier_pdf = db.Column(db.String(255))  # Chemin du fichier sur le serveur
+    
+    # Période couverte
+    date_debut = db.Column(db.Date)
+    date_fin = db.Column(db.Date)
+    semestre = db.Column(db.String(50))  # Ex: "S5", "Semestre 1 2024-2025"
+    
+    # Métadonnées d'analyse
+    analyse_completee = db.Column(db.Boolean, default=False)
+    algorithme_utilise = db.Column(db.String(50))  # Ex: "PyMuPDF+Regex", "Tesseract+NLP"
+    confiance_extraction = db.Column(db.Float)  # Score de confiance 0-100
+    
+    # Statistiques
+    nombre_cours_extraits = db.Column(db.Integer, default=0)
+    nombre_creneaux_libres = db.Column(db.Integer, default=0)
+    heures_cours_semaine = db.Column(db.Float)  # Heures de cours par semaine
+    
+    # Statut
+    actif = db.Column(db.Boolean, default=True)
+    archive = db.Column(db.Boolean, default=False)
+    
+    # Timestamps
+    date_import = db.Column(db.DateTime, default=datetime.utcnow)
+    date_analyse = db.Column(db.DateTime)
+    
+    # Relations
+    cours = db.relationship('Cours', backref='emploi_du_temps', lazy='dynamic', cascade='all, delete-orphan')
+    
+    def __init__(self, user_id, nom_fichier, **kwargs):
+        self.user_id = user_id
+        self.nom_fichier = nom_fichier
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+    
+    def calculer_statistiques(self):
+        """Calcule et met à jour les statistiques de l'emploi du temps"""
+        self.nombre_cours_extraits = self.cours.count()
+        
+        # Calculer les heures de cours par semaine
+        total_heures = 0
+        for cours in self.cours.all():
+            if cours.heure_debut and cours.heure_fin:
+                delta = datetime.combine(datetime.today(), cours.heure_fin) - \
+                        datetime.combine(datetime.today(), cours.heure_debut)
+                total_heures += delta.total_seconds() / 3600
+        
+        self.heures_cours_semaine = round(total_heures, 2)
+        db.session.commit()
+    
+    def detecter_creneaux_libres(self):
+        """Détecte les créneaux libres dans l'emploi du temps"""
+        # Cette logique sera implémentée dans le service d'analyse
+        pass
+    
+    def to_dict(self, include_cours=False):
+        """Convertit l'emploi du temps en dictionnaire"""
+        edt_dict = {
+            'id': self.id,
+            'user_id': self.user_id,
+            'nom_fichier': self.nom_fichier,
+            'date_debut': self.date_debut.isoformat() if self.date_debut else None,
+            'date_fin': self.date_fin.isoformat() if self.date_fin else None,
+            'semestre': self.semestre,
+            'analyse_completee': self.analyse_completee,
+            'algorithme_utilise': self.algorithme_utilise,
+            'confiance_extraction': self.confiance_extraction,
+            'nombre_cours_extraits': self.nombre_cours_extraits,
+            'nombre_creneaux_libres': self.nombre_creneaux_libres,
+            'heures_cours_semaine': self.heures_cours_semaine,
+            'actif': self.actif,
+            'archive': self.archive,
+            'date_import': self.date_import.isoformat() if self.date_import else None,
+            'date_analyse': self.date_analyse.isoformat() if self.date_analyse else None
+        }
+        
+        if include_cours:
+            edt_dict['cours'] = [cours.to_dict() for cours in self.cours.order_by('jour', 'heure_debut').all()]
+        
+        return edt_dict
+    
+    def __repr__(self):
+        return f'<EmploiDuTemps {self.nom_fichier}>'
+
+
+class Cours(db.Model):
+    """Modèle représentant un cours extrait de l'emploi du temps"""
+    
+    __tablename__ = 'cours'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    emploi_du_temps_id = db.Column(db.Integer, db.ForeignKey('emplois_du_temps.id'), nullable=False)
+    
+    # Informations du cours
+    jour = db.Column(db.String(20), nullable=False)  # 'lundi', 'mardi', etc.
+    heure_debut = db.Column(db.Time, nullable=False)
+    heure_fin = db.Column(db.Time, nullable=False)
+    
+    # Détails du cours
+    matiere = db.Column(db.String(100), nullable=False)
+    type_cours = db.Column(db.String(50))  # 'cours', 'td', 'tp', 'examen'
+    salle = db.Column(db.String(100))
+    enseignant = db.Column(db.String(100))
+    
+    # Récurrence
+    recurrent = db.Column(db.Boolean, default=True)  # Se répète chaque semaine
+    date_specifique = db.Column(db.Date)  # Pour les cours ponctuels
+    
+    # Métadonnées d'extraction
+    confiance = db.Column(db.Float)  # Score de confiance de l'extraction (0-100)
+    texte_brut_extrait = db.Column(db.Text)  # Texte original extrait du PDF
+    verifie_manuellement = db.Column(db.Boolean, default=False)
+    
+    # Timestamp
+    date_extraction = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def __init__(self, emploi_du_temps_id, jour, heure_debut, heure_fin, matiere, **kwargs):
+        self.emploi_du_temps_id = emploi_du_temps_id
+        self.jour = jour.lower()
+        self.heure_debut = heure_debut
+        self.heure_fin = heure_fin
+        self.matiere = matiere
+        
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+    
+    def calculer_duree(self):
+        """Calcule la durée du cours en minutes"""
+        if not self.heure_debut or not self.heure_fin:
+            return 0
+        
+        delta = datetime.combine(datetime.today(), self.heure_fin) - \
+                datetime.combine(datetime.today(), self.heure_debut)
+        return int(delta.total_seconds() / 60)
+    
+    def get_numero_jour(self):
+        """Retourne le numéro du jour de la semaine (0=lundi, 6=dimanche)"""
+        jours = {
+            'lundi': 0, 'mardi': 1, 'mercredi': 2, 'jeudi': 3,
+            'vendredi': 4, 'samedi': 5, 'dimanche': 6
+        }
+        return jours.get(self.jour.lower(), 0)
+    
+    def to_dict(self):
+        """Convertit le cours en dictionnaire"""
+        return {
+            'id': self.id,
+            'emploi_du_temps_id': self.emploi_du_temps_id,
+            'jour': self.jour,
+            'numero_jour': self.get_numero_jour(),
+            'heure_debut': self.heure_debut.strftime('%H:%M') if self.heure_debut else None,
+            'heure_fin': self.heure_fin.strftime('%H:%M') if self.heure_fin else None,
+            'duree_minutes': self.calculer_duree(),
+            'matiere': self.matiere,
+            'type_cours': self.type_cours,
+            'salle': self.salle,
+            'enseignant': self.enseignant,
+            'recurrent': self.recurrent,
+            'date_specifique': self.date_specifique.isoformat() if self.date_specifique else None,
+            'confiance': self.confiance,
+            'verifie_manuellement': self.verifie_manuellement,
+            'date_extraction': self.date_extraction.isoformat() if self.date_extraction else None
+        }
+    
+    @staticmethod
+    def get_jours_semaine():
+        """Retourne la liste des jours de la semaine"""
+        return ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche']
+    
+    def __repr__(self):
+        return f'<Cours {self.matiere} - {self.jour} {self.heure_debut}>'
