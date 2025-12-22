@@ -90,6 +90,9 @@ import CalendarPage from './pages/CalendarPage';
 
 import './styles/dashboard.css';
 import MatiereTasksPage from './pages/MatiereTasksPage';
+import PlanningGeneratorPage from './pages/PlanningGeneratorPage';
+import StudySessionPage from './pages/StudySessionPage';
+import StatisticsPage from './pages/StatisticsPage';
 
 function App() {
   return (
@@ -121,6 +124,10 @@ function App() {
             <Route path="/dashboard/tasks" element={<ProtectedRoute><MatiereTasksPage/></ProtectedRoute>} />
             <Route path="/dashboard/CreateTaskForm" element={<ProtectedRoute><CreateTaskForm/></ProtectedRoute>} />
             <Route path="/dashboard/calendarPage" element={<ProtectedRoute><CalendarPage /></ProtectedRoute>} />
+            <Route path="/dashboard/planning-generator" element={<ProtectedRoute><PlanningGeneratorPage /></ProtectedRoute>} />
+            <Route path="/dashboard/study-session" element={<ProtectedRoute><StudySessionPage /></ProtectedRoute>} />
+            <Route path="/dashboard/statistics" element={<ProtectedRoute><StatisticsPage /></ProtectedRoute>} />
+
             
             
           </Routes>
