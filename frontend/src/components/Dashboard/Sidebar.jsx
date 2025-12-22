@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -15,14 +15,79 @@ import {
   ChevronDown,
   User,
   BarChart3,
+  UserCircle,
+  Cog,
+  Shield,
+  ChevronRight,
+  ChevronLeft
 } from 'lucide-react';
+import '../../styles/sidebar.css';
 
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
+  
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const sidebarRef = useRef(null);
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
+
+  // Fermer la sidebar en cliquant à l'extérieur (mobile)
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isOpen && sidebarRef.current && !sidebarRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [isOpen]);
+
+  // Swipe gestures pour mobile
+  useEffect(() => {
+    const handleTouchStart = (e) => {
+      touchStartX.current = e.changedTouches[0].screenX;
+    };
+
+    const handleTouchEnd = (e) => {
+      touchEndX.current = e.changedTouches[0].screenX;
+      handleSwipe();
+    };
+
+    const handleSwipe = () => {
+      const swipeThreshold = 50;
+      const swipeDistance = touchEndX.current - touchStartX.current;
+
+      if (Math.abs(swipeDistance) > swipeThreshold) {
+        if (swipeDistance > 0 && !isOpen && touchStartX.current < 50) {
+          // Swipe de gauche à droite pour ouvrir
+          setIsOpen(true);
+        } else if (swipeDistance < 0 && isOpen) {
+          // Swipe de droite à gauche pour fermer
+          setIsOpen(false);
+        }
+      }
+    };
+
+    document.addEventListener('touchstart', handleTouchStart);
+    document.addEventListener('touchend', handleTouchEnd);
+
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [isOpen]);
 
   const handleLogout = async () => {
     try {
@@ -31,6 +96,27 @@ const Sidebar = () => {
     } catch (error) {
       console.error('Logout error:', error);
     }
+  };
+
+  const handleNavigation = (path) => {
+    if (path === '/login') {
+      handleLogout();
+    } else {
+      navigate(path);
+    }
+    setIsOpen(false);
+  };
+
+  const handleToggleCollapse = () => {
+    if (isAnimating) return;
+    
+    setIsAnimating(true);
+    setIsCollapsed(!isCollapsed);
+    
+    // Réinitialiser l'animation après le délai
+    setTimeout(() => {
+      setIsAnimating(false);
+    }, 300);
   };
 
   const menuItems = [
@@ -49,7 +135,7 @@ const Sidebar = () => {
     {
       name: 'Tâches',
       icon: CheckSquare,
-      path: '/dashboard/taches',
+      path: '/dashboard/tasks',
       badge: 3,
     },
     {
@@ -61,19 +147,19 @@ const Sidebar = () => {
     {
       name: 'Emploi du temps',
       icon: FileText,
-      path: '/dashboard/emploi-temps',
+      path: '/dashboard/calendarPage',
       badge: null,
     },
     {
-      name: 'Notifications',
+      name: 'Nouvelle Session',
       icon: Bell,
-      path: '/dashboard/notifications',
+      path: '/dashboard/study-session',
       badge: 5,
     },
     {
       name: 'Statistiques',
       icon: BarChart3,
-      path: '/dashboard/stats',
+      path: '/dashboard/statistics',
       badge: null,
     },
   ];
@@ -84,99 +170,109 @@ const Sidebar = () => {
     <>
       {/* Mobile Menu Button */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-3 rounded-xl bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 hover:scale-105 transition-transform"
+        onClick={() => {
+          setIsAnimating(true);
+          setIsOpen(!isOpen);
+          setTimeout(() => setIsAnimating(false), 300);
+        }}
+        className="sidebar-mobile-button"
       >
         {isOpen ? (
-          <X className="w-6 h-6 text-gray-700 dark:text-gray-200" />
+          <X className="sidebar-mobile-icon" />
         ) : (
-          <Menu className="w-6 h-6 text-gray-700 dark:text-gray-200" />
+          <Menu className="sidebar-mobile-icon" />
         )}
       </button>
 
-      {/* Overlay for mobile */}
-      {isOpen && (
-        <div
-          className="lg:hidden fixed inset-0 bg-black/50 z-40 backdrop-blur-sm"
-          onClick={() => setIsOpen(false)}
-        />
-      )}
+    
 
       {/* Sidebar */}
       <aside
-        className={`
-          fixed top-0 left-0 h-screen
-          bg-white dark:bg-gray-900 
-          border-r-2 border-gray-200 dark:border-gray-800
-          transition-transform duration-300 ease-in-out z-40
-          ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-          w-72 flex flex-col shadow-xl
-        `}
+        ref={sidebarRef}
+        className={`sidebar-container ${isOpen ? 'sidebar-visible' : 'sidebar-hidden'} ${isCollapsed ? 'collapsed' : ''} ${isHovered && isCollapsed ? 'hovered' : ''}`}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        style={{
+          transition: isAnimating ? 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)' : 'none'
+        }}
       >
         {/* Logo / Brand */}
-        <div className="h-20 flex items-center px-6 border-b-2 border-gray-200 dark:border-gray-800 bg-linear-to-r from-blue-50 to-purple-50 dark:from-gray-800 dark:to-gray-800">
-          <Link to="/dashboard" className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
-              <span className="text-white font-bold text-lg">TF</span>
+        <div className="sidebar-header">
+          <Link to="/dashboard" className="sidebar-logo-link" onClick={() => setIsOpen(false)}>
+            <div className="sidebar-logo-icon">
+              <span className="sidebar-logo-initials">TF</span>
             </div>
-            <div>
-              <span className="text-2xl font-bold bg-linear-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                TaskFlow
-              </span>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Student Assistant</p>
+            <div className={`sidebar-logo-text-container ${isCollapsed ? 'hidden' : ''}`}>
+              <span className="sidebar-logo-text">TaskFlow</span>
+              <p className="sidebar-logo-subtitle">Student Assistant</p>
             </div>
+            {!isCollapsed && (
+              <button 
+                className="sidebar-collapse-btn"
+                onClick={handleToggleCollapse}
+                title="Réduire la sidebar"
+              >
+                <ChevronLeft className="collapse-icon" />
+              </button>
+            )}
           </Link>
         </div>
 
         {/* User Profile Section */}
-        <div className="px-4 py-5 border-b-2 border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+        <div className="sidebar-profile-section">
           <button
             onClick={() => setIsProfileOpen(!isProfileOpen)}
-            className="w-full flex items-center space-x-3 p-3 rounded-xl hover:bg-white dark:hover:bg-gray-800 transition-all duration-200 group"
+            className="sidebar-profile-button"
           >
-            <div className="w-12 h-12 rounded-xl bg-linear-to-br from-blue-500 to-green-500 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
-              <User className="w-6 h-6 text-white" />
+            <div className="sidebar-profile-avatar">
+              <User className="sidebar-profile-avatar-icon" />
             </div>
-            <div className="flex-1 text-left min-w-0">
-              <p className="text-sm font-bold text-gray-900 dark:text-white truncate">
-                {user?.nom || 'Utilisateur'}
+            <div className={`sidebar-profile-info ${isCollapsed ? 'hidden' : ''}`}>
+              <p className="sidebar-profile-name">
+                {user?.nom || 'Utilisateur'} {user?.prenom ? ` ${user.prenom}` : ''}
               </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+              <p className="sidebar-profile-email">
                 {user?.email || 'email@example.com'}
               </p>
             </div>
-            <ChevronDown
-              className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${
-                isProfileOpen ? 'rotate-180' : ''
-              }`}
-            />
+            {!isCollapsed && (
+              <ChevronDown
+                className={`sidebar-profile-chevron ${isProfileOpen ? 'rotated' : ''}`}
+              />
+            )}
           </button>
 
-          {/* Profile Dropdown */}
-          {isProfileOpen && (
-            <div className="mt-3 space-y-1 animate-slideDown">
+          {/* Profile Dropdown (visible uniquement quand pas collapsed) */}
+          {isProfileOpen && !isCollapsed && (
+            <div className="sidebar-profile-dropdown">
               <Link
                 to="/dashboard/profile"
-                className="flex items-center space-x-3 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800 rounded-lg transition-colors"
-                onClick={() => setIsOpen(false)}
+                className="sidebar-profile-link"
+                onClick={() => {
+                  setIsOpen(false);
+                  setIsProfileOpen(false);
+                }}
               >
-                <User className="w-4 h-4" />
+                <UserCircle className="sidebar-profile-link-icon" />
                 <span>Mon profil</span>
               </Link>
               <Link
                 to="/dashboard/settings"
-                className="flex items-center space-x-3 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800 rounded-lg transition-colors"
-                onClick={() => setIsOpen(false)}
+                className="sidebar-profile-link"
+                onClick={() => {
+                  setIsOpen(false);
+                  setIsProfileOpen(false);
+                }}
               >
-                <Settings className="w-4 h-4" />
+                <Settings className="sidebar-profile-link-icon" />
                 <span>Paramètres</span>
               </Link>
-              <div className="h-px bg-gray-200 dark:bg-gray-700 my-2" />
+              <div className="sidebar-profile-divider" />
               <button
                 onClick={handleLogout}
-                className="w-full flex items-center space-x-3 px-4 py-2.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                className="sidebar-logout-button"
               >
-                <LogOut className="w-4 h-4" />
+                <LogOut className="sidebar-logout-icon" />
                 <span>Déconnexion</span>
               </button>
             </div>
@@ -184,101 +280,73 @@ const Sidebar = () => {
         </div>
 
         {/* Navigation Menu */}
-        <nav className="flex-1 px-4 py-6 overflow-y-auto">
-          <div className="space-y-2">
+        <nav className="sidebar-nav">
+          <div className="sidebar-nav-items">
             {menuItems.map((item) => {
               const Icon = item.icon;
               const active = isActive(item.path);
 
               return (
-                <Link
+                <button
                   key={item.path}
-                  to={item.path}
-                  onClick={() => setIsOpen(false)}
-                  className={`
-                    flex items-center justify-between px-4 py-3 rounded-xl
-                    transition-all duration-200 group relative overflow-hidden
-                    ${
-                      active
-                        ? 'bg-linear-to-r from-blue-500 to-purple-600 text-white shadow-lg'
-                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
-                    }
-                  `}
+                  onClick={() => handleNavigation(item.path)}
+                  className={`sidebar-nav-item ${active ? 'sidebar-nav-item-active' : ''} ${isCollapsed ? 'collapsed' : ''}`}
+                  title={isCollapsed ? item.name : ''}
                 >
-                  <div className="flex items-center space-x-3">
-                    <div className={`
-                      w-9 h-9 rounded-lg flex items-center justify-center
-                      ${active 
-                        ? 'bg-white/20' 
-                        : 'bg-gray-100 dark:bg-gray-800 group-hover:bg-gray-200 dark:group-hover:bg-gray-700'
-                      }
-                    `}>
+                  <div className="sidebar-nav-item-content">
+                    <div className={`sidebar-nav-item-icon-wrapper ${active ? 'sidebar-nav-item-icon-active' : ''}`}>
                       <Icon
-                        className={`w-5 h-5 ${
-                          active
-                            ? 'text-white'
-                            : 'text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white'
-                        }`}
+                        className={`sidebar-nav-item-icon ${active ? 'sidebar-nav-item-icon-active' : ''}`}
                       />
                     </div>
-                    <span className="text-sm font-semibold">{item.name}</span>
+                    <span className={`sidebar-nav-item-text ${isCollapsed ? 'hidden' : ''}`}>
+                      {item.name}
+                    </span>
                   </div>
 
                   {/* Badge */}
-                  {item.badge && (
-                    <div className={`
-                      px-2.5 py-1 text-xs font-bold rounded-lg
-                      ${active 
-                        ? 'bg-white/30 text-white' 
-                        : 'bg-red-500 text-white'
-                      }
-                      animate-pulse
-                    `}>
+                  {!isCollapsed && item.badge && (
+                    <div className={`sidebar-nav-item-badge ${active ? 'sidebar-nav-item-badge-active' : ''}`}>
                       {item.badge}
                     </div>
                   )}
 
                   {/* Active indicator */}
                   {active && (
-                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-white rounded-r-full" />
+                    <div className="sidebar-nav-item-indicator" />
                   )}
-                </Link>
+                </button>
               );
             })}
           </div>
         </nav>
 
-        {/* Bottom Section */}
-        <div className="px-4 py-4 border-t-2 border-gray-200 dark:border-gray-800">
-          <Link
-            to="/dashboard/settings"
-            onClick={() => setIsOpen(false)}
-            className="flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all group"
-          >
-            <div className="w-9 h-9 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center group-hover:bg-gray-200 dark:group-hover:bg-gray-700">
-              <Settings className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-            </div>
-            <span className="text-sm font-semibold">Paramètres</span>
-          </Link>
-        </div>
+        {/* Expand Button (visible quand collapsed) */}
+        {isCollapsed && (
+          <div className="sidebar-expand-area">
+            <button
+              className="sidebar-expand-btn"
+              onClick={handleToggleCollapse}
+              title="Étendre la sidebar"
+            >
+              <ChevronRight className="expand-icon" />
+            </button>
+          </div>
+        )}
       </aside>
 
-      {/* Animation keyframes */}
-      <style>{`
-        @keyframes slideDown {
-          from {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        .animate-slideDown {
-          animation: slideDown 0.2s ease-out;
-        }
-      `}</style>
+      {/* Toggle Button for Desktop */}
+      <button
+        className={`sidebar-desktop-toggle ${isCollapsed ? 'collapsed' : ''}`}
+        onClick={handleToggleCollapse}
+        title={isCollapsed ? "Étendre la sidebar" : "Réduire la sidebar"}
+      >
+        {isCollapsed ? (
+          <ChevronRight className="toggle-icon" />
+        ) : (
+          <ChevronLeft className="toggle-icon" />
+        )}
+      </button>
     </>
   );
 };

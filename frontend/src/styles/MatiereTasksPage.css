@@ -140,6 +140,7 @@
   padding: 1rem;
   min-height: 500px;
   transition: background-color 0.2s ease;
+  
 }
 
 .column-content.drag-over {

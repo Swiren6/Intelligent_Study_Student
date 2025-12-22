@@ -3,9 +3,10 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   Calendar, Clock, CheckCircle, Download, ChevronRight, Zap
 } from 'lucide-react';
-import Navbar from '../components/Layout/Navbar';
+import Navbar from '../components/Dashboard/Navbar';
 import { useToast } from '../context/ToastContext';
 import '../styles/planning-generator.css';
+import Sidebar from '../components/Dashboard/Sidebar';
 
 export default function PlanningGeneratorPage() {
   const navigate = useNavigate();
@@ -150,6 +151,7 @@ export default function PlanningGeneratorPage() {
   return (
     <div className="planning-generator-page">
       <Navbar />
+      <Sidebar></Sidebar>
 
       <main className="planning-container">
         <div className="planning-header">

@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { Calendar as CalendarIcon, Plus, Edit, Trash2, Clock, AlertCircle, CheckCircle, BookOpen, Filter, Download } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, isToday, addMonths, subMonths, isBefore, differenceInDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import Navbar from '../components/Layout/Navbar';
+import Navbar from '../components/Dashboard/Navbar';
 import "../styles/calendar.css";
+import Sidebar from '../components/Dashboard/Sidebar';
 
 // Mock API - À remplacer par votre vraie API
 const api = {
@@ -262,8 +263,12 @@ export default function ExamCalendarPage() {
   }
 
   return (
+
+    
     <div className="min-h-screen bg-gray-50">
       <Navbar></Navbar>
+      <Sidebar></Sidebar>
+      
 
       <main className="max-w-7xl mx-auto px-4 py-8">
         {/* Header */}
