@@ -2,8 +2,6 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, X, Edit, Trash2, Clock, Calendar } from 'lucide-react';
 import Navbar from '../components/Layout/Navbar';
-import { useAPI } from '../hooks/useApi';
-import { useToast } from '../hooks/useToast';
 import API_CONFIG from '../config/api.config';
 
 import '../styles/MatiereTasksPage.css';
@@ -11,7 +9,6 @@ import '../styles/MatiereTasksPage.css';
 export default function MatiereTasksPage() {
   const { matiereId } = useParams();
   const navigate = useNavigate();
-  const api = useAPI();
   const { showSuccess, showError } = useToast();
   
   const [subject, setSubject] = useState(null);
@@ -360,7 +357,6 @@ function TaskModal({ subjectId, columnId, task, onClose, onSave }) {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const api = useAPI();
   const { showSuccess, showError } = useToast();
 
   const handleSubmit = async (e) => {

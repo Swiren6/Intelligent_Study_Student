@@ -1,425 +1,273 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Plus, Edit, Trash2, Eye, BookOpen } from 'lucide-react';
-import Navbar from '../components/Layout/Navbar';
-import { useAPI } from '../hooks/useApi';
-import { useToast } from '../hooks/useToast';
-import API_CONFIG from '../config/api.config';
+import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
+import Sidebar from '../components/Dashboard/Sidebar';
+import {
+  BookOpen,
+  CheckSquare,
+  Calendar,
+  TrendingUp,
+  Clock,
+  AlertCircle,
+  Award,
+  Target,
+} from 'lucide-react';
 
-import '../styles/Dashboard.css';
+const DashboardPage = () => {
+  const { user } = useAuth();
+  const { success } = useToast();
+  const [stats, setStats] = useState({
+    matieres: 7,
+    taches: 12,
+    tachesCompletees: 8,
+    plannings: 2,
+    tempsEtudie: 24.5,
+    tempsEstime: 40,
+  });
 
-export default function DashboardPage() {
-  const [subjects, setSubjects] = useState([]);
-  const [showModal, setShowModal] = useState(false);
-  const [editingSubject, setEditingSubject] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
-  const api = useAPI();
-  const { showSuccess, showError } = useToast();
+  const [recentActivities, setRecentActivities] = useState([
+    {
+      id: 1,
+      type: 'tache',
+      title: 'TP Machine Learning terminé',
+      time: 'Il y a 2 heures',
+      status: 'completed',
+    },
+    {
+      id: 2,
+      type: 'matiere',
+      title: 'Nouvelle matière ajoutée: React',
+      time: 'Il y a 5 heures',
+      status: 'new',
+    },
+    {
+      id: 3,
+      type: 'planning',
+      title: 'Planning de la semaine généré',
+      time: 'Hier',
+      status: 'info',
+    },
+  ]);
+
+  const [urgentTasks, setUrgentTasks] = useState([
+    {
+      id: 1,
+      title: 'Projet Django REST API',
+      matiere: 'Django',
+      deadline: '2 jours',
+      progress: 35,
+      color: '#F59E0B',
+    },
+    {
+      id: 2,
+      title: 'Révision ML/DL chapitres 1-3',
+      matiere: 'Machine Learning',
+      deadline: '5 jours',
+      progress: 65,
+      color: '#8B5CF6',
+    },
+    {
+      id: 3,
+      title: 'Projet React Dashboard',
+      matiere: 'React',
+      deadline: '7 jours',
+      progress: 50,
+      color: '#61DAFB',
+    },
+  ]);
 
   useEffect(() => {
-    fetchSubjects();
+    // Afficher un message de bienvenue
+    success(`Bienvenue ${user?.nom || 'étudiant'} ! 👋`);
+
+    // TODO: Charger les vraies données depuis l'API
+    // fetchDashboardStats();
   }, []);
 
-  const fetchSubjects = async () => {
-    setLoading(true);
-    try {
-      const result = await api.get(API_CONFIG.ENDPOINTS.SUBJECTS.BASE);
-      
-      if (result.success) {
-        setSubjects(result.data.subjects || result.data);
-      } else {
-        showError('Erreur lors du chargement des matières');
-      }
-    } catch (error) {
-      console.error('Error fetching subjects:', error);
-      showError('Erreur lors du chargement des matières');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDelete = async (id) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette matière ?')) {
-      try {
-        const result = await api.del(API_CONFIG.ENDPOINTS.SUBJECTS.DELETE(id));
-        
-        if (result.success) {
-          setSubjects(subjects.filter(s => s.id !== id));
-          showSuccess('Matière supprimée avec succès');
-        } else {
-          showError('Erreur lors de la suppression');
-        }
-      } catch (error) {
-        console.error('Error deleting subject:', error);
-        showError('Erreur lors de la suppression');
-      }
-    }
-  };
-
-  const handleEdit = (subject) => {
-    setEditingSubject(subject);
-    setShowModal(true);
-  };
-
-  const handleAdd = () => {
-    setEditingSubject(null);
-    setShowModal(true);
-  };
-
-  const handleViewTasks = (subjectId) => {
-    navigate(`/matiere/${subjectId}/tasks`);
-  };
-
-  if (loading) {
-    return (
-      <div className="loading-container">
-        <div className="spinner" />
-      </div>
-    );
-  }
-
-  // Calculer les statistiques
-  const totalTasks = subjects.reduce((acc, s) => acc + (s.tasks_count || 0), 0);
-  const completedTasks = subjects.reduce((acc, s) => acc + (s.completed_tasks || 0), 0);
-
-  return (
-    <div className="dashboard-container">
-      <Navbar />
-      
-      <main className="dashboard-main">
-        {/* Header */}
-        <div className="dashboard-header">
-          <div>
-            <h1 className="dashboard-title">Mes Matières</h1>
-            <p className="dashboard-subtitle">Gérez vos matières et organisez vos études</p>
-          </div>
-          <button
-            onClick={handleAdd}
-            className="add-button"
-          >
-            <Plus className="w-5 h-5" />
-            <span>Nouvelle Matière</span>
-          </button>
+  const StatCard = ({ icon: Icon, title, value, subtitle, color, trend }) => (
+    <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+      <div className="flex items-center justify-between mb-4">
+        <div className={`w-12 h-12 rounded-lg bg-${color}-100 dark:bg-${color}-900/20 flex items-center justify-center`}>
+          <Icon className={`w-6 h-6 text-${color}-600 dark:text-${color}-400`} />
         </div>
-
-        {/* Statistiques rapides */}
-        <div className="stats-grid">
-          <div className="stat-card">
-            <div className="stat-card-header">
-              <div>
-                <p className="stat-label">Total Matières</p>
-                <p className="stat-value stat-blue">{subjects.length}</p>
-              </div>
-              <BookOpen className="stat-icon" />
-            </div>
-          </div>
-          
-          <div className="stat-card">
-            <div className="stat-card-header">
-              <div>
-                <p className="stat-label">Tâches en cours</p>
-                <p className="stat-value stat-orange">{totalTasks}</p>
-              </div>
-              <div className="stat-emoji-container emoji-orange">
-                <span className="text-2xl">📝</span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="stat-card">
-            <div className="stat-card-header">
-              <div>
-                <p className="stat-label">Tâches complétées</p>
-                <p className="stat-value stat-green">{completedTasks}</p>
-              </div>
-              <div className="stat-emoji-container emoji-green">
-                <span className="text-2xl">✅</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Liste des matières */}
-        {subjects.length === 0 ? (
-          <div className="empty-state">
-            <BookOpen className="empty-icon" />
-            <h3 className="empty-title">Aucune matière</h3>
-            <p className="empty-description">
-              Commencez par créer votre première matière
-            </p>
-            <button
-              onClick={handleAdd}
-              className="add-button"
-            >
-              Créer une matière
-            </button>
-          </div>
-        ) : (
-          <div className="matieres-grid">
-            {subjects.map((subject) => (
-              <div
-                key={subject.id}
-                className="matiere-card"
-              >
-                {/* Header coloré */}
-                <div 
-                  className="matiere-header"
-                  style={{ 
-                    background: `linear-gradient(135deg, ${subject.color || '#646cff'} 0%, ${subject.color || '#535bf2'} 100%)`
-                  }}
-                >
-                  <div className="matiere-header-content">
-                    <h3 className="matiere-name">{subject.nom}</h3>
-                    <div className="matiere-tags">
-                      <span className="matiere-tag">
-                        {subject.tasks_count || 0} tâches
-                      </span>
-                      <span className="matiere-tag">
-                        {subject.niveau_difficulte || 'Moyen'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Contenu */}
-                <div className="matiere-content">
-                  <p className="matiere-description">
-                    {subject.description || 'Aucune description'}
-                  </p>
-
-                  {/* Progression */}
-                  <div className="progress-container">
-                    <div className="progress-header">
-                      <span className="progress-label">Progression</span>
-                      <span className="progress-value">
-                        {subject.completed_tasks || 0}/{subject.tasks_count || 0}
-                      </span>
-                    </div>
-                    <div className="progress-bar">
-                      <div
-                        className="progress-fill"
-                        style={{
-                          width: `${
-                            subject.tasks_count
-                              ? (subject.completed_tasks / subject.tasks_count) * 100
-                              : 0
-                          }%`,
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="matiere-actions">
-                    <button
-                      onClick={() => handleViewTasks(subject.id)}
-                      className="view-button"
-                    >
-                      <Eye className="w-4 h-4" />
-                      <span>Voir tâches</span>
-                    </button>
-                    
-                    <button
-                      onClick={() => handleEdit(subject)}
-                      className="icon-button edit-button"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    
-                    <button
-                      onClick={() => handleDelete(subject.id)}
-                      className="icon-button delete-button"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+        {trend && (
+          <span className={`text-sm font-semibold ${trend > 0 ? 'text-green-600' : 'text-red-600'}`}>
+            {trend > 0 ? '+' : ''}{trend}%
+          </span>
         )}
-      </main>
-
-      {/* Modal Ajout/Modification */}
-      {showModal && (
-        <SubjectModal
-          subject={editingSubject}
-          onClose={() => {
-            setShowModal(false);
-            setEditingSubject(null);
-          }}
-          onSave={() => {
-            fetchSubjects();
-            setShowModal(false);
-            setEditingSubject(null);
-          }}
-        />
+      </div>
+      <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+        {value}
+      </h3>
+      <p className="text-sm text-gray-600 dark:text-gray-400">{title}</p>
+      {subtitle && (
+        <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">{subtitle}</p>
       )}
     </div>
   );
-}
 
-// Modal pour ajouter/modifier une matière
-function SubjectModal({ subject, onClose, onSave }) {
-  const [formData, setFormData] = useState({
-    nom: subject?.nom || '',
-    description: subject?.description || '',
-    niveau_difficulte: subject?.niveau_difficulte || 'MOYEN',
-    color: subject?.color || '#646cff',
-    duree_totale_heures: subject?.duree_totale_heures || 0,
-    priorite: subject?.priorite || 5,
-  });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const api = useAPI();
-  const { showSuccess, showError } = useToast();
-
-  const colors = [
-    { name: 'Bleu', value: '#646cff' },
-    { name: 'Vert', value: '#10b981' },
-    { name: 'Orange', value: '#f97316' },
-    { name: 'Violet', value: '#8b5cf6' },
-    { name: 'Rose', value: '#ec4899' },
-    { name: 'Rouge', value: '#ef4444' },
-  ];
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-
-    try {
-      let result;
-      
-      if (subject) {
-        result = await api.put(API_CONFIG.ENDPOINTS.SUBJECTS.UPDATE(subject.id), formData);
-      } else {
-        result = await api.post(API_CONFIG.ENDPOINTS.SUBJECTS.CREATE, formData);
-      }
-      
-      if (result.success) {
-        showSuccess(subject ? 'Matière modifiée avec succès' : 'Matière créée avec succès');
-        onSave();
-      } else {
-        setError(result.error || 'Erreur lors de la sauvegarde');
-      }
-    } catch (err) {
-      setError(err.message || 'Erreur lors de la sauvegarde');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const ProgressBar = ({ progress, color }) => (
+    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+      <div
+        className="h-2 rounded-full transition-all duration-300"
+        style={{
+          width: `${progress}%`,
+          backgroundColor: color,
+        }}
+      />
+    </div>
+  );
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content">
-        <div className="modal-header">
-          <h2 className="modal-title">
-            {subject ? 'Modifier la matière' : 'Nouvelle matière'}
-          </h2>
+    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* <Sidebar /> */}
+
+      {/* Main Content */}
+      <main className="flex-1 lg:ml-64 p-8">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            Tableau de bord
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Bienvenue, {user?.nom || 'étudiant'} ! Voici un aperçu de vos études.
+          </p>
         </div>
 
-        {error && (
-          <div className="error-message">
-            {error}
-          </div>
-        )}
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <StatCard
+            icon={BookOpen}
+            title="Matières actives"
+            value={stats.matieres}
+            subtitle="7 matières ce semestre"
+            color="blue"
+            trend={12}
+          />
+          <StatCard
+            icon={CheckSquare}
+            title="Tâches en cours"
+            value={`${stats.tachesCompletees}/${stats.taches}`}
+            subtitle={`${Math.round((stats.tachesCompletees / stats.taches) * 100)}% complétées`}
+            color="green"
+            trend={8}
+          />
+          <StatCard
+            icon={Calendar}
+            title="Plannings actifs"
+            value={stats.plannings}
+            subtitle="2 plannings cette semaine"
+            color="purple"
+          />
+          <StatCard
+            icon={Clock}
+            title="Temps d'étude"
+            value={`${stats.tempsEtudie}h`}
+            subtitle={`${stats.tempsEstime}h estimées`}
+            color="orange"
+            trend={-5}
+          />
+        </div>
 
-        <form onSubmit={handleSubmit} className="modal-body">
-          <div className="form-group">
-            <label className="form-label">
-              Nom de la matière *
-            </label>
-            <input
-              type="text"
-              value={formData.nom}
-              onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
-              className="form-input"
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Description</label>
-            <textarea
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              rows={3}
-              className="form-textarea"
-            />
-          </div>
-
-          <div className="form-grid">
-            <div className="form-group">
-              <label className="form-label">
-                Niveau de difficulté
-              </label>
-              <select
-                value={formData.niveau_difficulte}
-                onChange={(e) =>
-                  setFormData({ ...formData, niveau_difficulte: e.target.value })
-                }
-                className="form-select"
-              >
-                <option value="FACILE">Facile</option>
-                <option value="MOYEN">Moyen</option>
-                <option value="DIFFICILE">Difficile</option>
-              </select>
+        {/* Two Columns Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Tâches urgentes */}
+          <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center">
+                <AlertCircle className="w-5 h-5 text-red-500 mr-2" />
+                Tâches urgentes
+              </h2>
+              <button className="text-sm text-blue-600 dark:text-blue-400 hover:underline">
+                Voir tout
+              </button>
             </div>
 
-            <div className="form-group">
-              <label className="form-label">
-                Priorité (1-10)
-              </label>
-              <input
-                type="number"
-                min="1"
-                max="10"
-                value={formData.priorite}
-                onChange={(e) =>
-                  setFormData({ ...formData, priorite: parseInt(e.target.value) })
-                }
-                className="form-input"
-              />
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Couleur</label>
-            <div className="color-picker">
-              {colors.map((color) => (
-                <button
-                  key={color.value}
-                  type="button"
-                  onClick={() => setFormData({ ...formData, color: color.value })}
-                  className={`color-option ${formData.color === color.value ? 'selected' : ''}`}
-                  style={{ backgroundColor: color.value }}
-                  title={color.name}
-                />
+            <div className="space-y-4">
+              {urgentTasks.map((task) => (
+                <div
+                  key={task.id}
+                  className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-300 dark:hover:border-blue-700 transition-colors"
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
+                        {task.title}
+                      </h3>
+                      <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
+                        <span
+                          className="w-2 h-2 rounded-full"
+                          style={{ backgroundColor: task.color }}
+                        />
+                        <span>{task.matiere}</span>
+                        <span>•</span>
+                        <span className="text-red-600 dark:text-red-400">
+                          Dans {task.deadline}
+                        </span>
+                      </div>
+                    </div>
+                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                      {task.progress}%
+                    </span>
+                  </div>
+                  <ProgressBar progress={task.progress} color={task.color} />
+                </div>
               ))}
             </div>
           </div>
 
-          <div className="modal-footer">
-            <button
-              type="button"
-              onClick={onClose}
-              className="cancel-button"
-              disabled={loading}
-            >
-              Annuler
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="save-button"
-            >
-              {loading ? 'Enregistrement...' : subject ? 'Modifier' : 'Créer'}
-            </button>
+          {/* Activité récente */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center">
+              <TrendingUp className="w-5 h-5 text-blue-500 mr-2" />
+              Activité récente
+            </h2>
+
+            <div className="space-y-4">
+              {recentActivities.map((activity) => (
+                <div key={activity.id} className="flex items-start space-x-3">
+                  <div className={`
+                    w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0
+                    ${activity.status === 'completed' ? 'bg-green-100 dark:bg-green-900/20' : ''}
+                    ${activity.status === 'new' ? 'bg-blue-100 dark:bg-blue-900/20' : ''}
+                    ${activity.status === 'info' ? 'bg-purple-100 dark:bg-purple-900/20' : ''}
+                  `}>
+                    {activity.type === 'tache' && <CheckSquare className="w-4 h-4 text-green-600 dark:text-green-400" />}
+                    {activity.type === 'matiere' && <BookOpen className="w-4 h-4 text-blue-600 dark:text-blue-400" />}
+                    {activity.type === 'planning' && <Calendar className="w-4 h-4 text-purple-600 dark:text-purple-400" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                      {activity.title}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {activity.time}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-        </form>
-      </div>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <button className="p-4 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center space-x-2">
+            <Target className="w-5 h-5" />
+            <span className="font-semibold">Nouvelle tâche</span>
+          </button>
+          <button className="p-4 bg-gradient-to-br from-green-500 to-green-600 text-white rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center space-x-2">
+            <Calendar className="w-5 h-5" />
+            <span className="font-semibold">Créer planning</span>
+          </button>
+          <button className="p-4 bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center space-x-2">
+            <BookOpen className="w-5 h-5" />
+            <span className="font-semibold">Ajouter matière</span>
+          </button>
+        </div>
+      </main>
     </div>
   );
-}
+};
+
+export default DashboardPage;

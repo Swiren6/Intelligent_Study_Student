@@ -11,7 +11,9 @@ from app.models.matiere import Matiere
 from app.models.tache import Tache
 from app.models.planning import Planning
 from app.models.session import Session
-from app.models.emploi_du_temps import EmploiDuTemps, Cours
+from app.models.emploi_du_temps import EmploiDuTemps
+from app.models.cours import Cours
+
 import random
 
 

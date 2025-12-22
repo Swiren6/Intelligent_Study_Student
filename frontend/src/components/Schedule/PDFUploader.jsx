@@ -1,7 +1,5 @@
 import { useState, useRef } from 'react';
 import { Upload, X, FileText, AlertCircle } from 'lucide-react';
-import { useAPI } from '../../hooks/useApi';
-import { useToast } from '../../hooks/useToast';
 import API_CONFIG from '../../config/api.config';
 import PropTypes from 'prop-types';
 
@@ -12,7 +10,6 @@ export default function PDFUploader({ onClose, onUploadComplete }) {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [semestre, setSemestre] = useState('');
   const fileInputRef = useRef(null);
-  const api = useAPI();
   const { showError } = useToast();
 
   const handleDrag = (e) => {

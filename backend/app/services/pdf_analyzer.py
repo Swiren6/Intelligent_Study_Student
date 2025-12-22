@@ -10,7 +10,9 @@ import pdfplumber
 
 
 from app import db
-from app.models.emploi_du_temps import EmploiDuTemps, Cours
+from app.models.emploi_du_temps import EmploiDuTemps
+from app.models.cours import Cours
+
 
 
 class PDFAnalyzer:

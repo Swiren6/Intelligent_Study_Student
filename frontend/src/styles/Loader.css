@@ -1,33 +1,78 @@
-@import "tailwindcss";
-@reference "tailwindcss/utilities";
+/* ================================
+   LOADING CONTAINER
+   ================================ */
 
-.loader-container {
-  @apply fixed inset-0 flex items-center justify-center bg-white/90 backdrop-blur-sm z-50;
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  gap: 1rem;
+  background: #F8FAFC;
 }
 
-.loader-content {
-  @apply flex flex-col items-center gap-4;
+.loading-container p {
+  color: #64748b;
+  font-size: 1rem;
+  margin: 0;
 }
 
-.loader {
-  @apply relative;
+/* ================================
+   SPINNERS
+   ================================ */
+
+/* Petit spinner (pour boutons) */
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
 }
 
-.loader-spinner {
-  @apply w-full h-full border-4 border-gray-200 border-t-blue-600 rounded-full;
-  animation: spin 1s linear infinite;
+/* Grand spinner (pour pages) */
+.spinner-large {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #e2e8f0;
+  border-top-color: #3B82F6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-.loader-text {
-  @apply text-gray-600 font-medium text-lg;
+/* ================================
+   DARK MODE
+   ================================ */
+
+[data-theme="dark"] .loading-container {
+  background: #0f172a;
 }
 
-/* Variant inline */
-.loader-inline {
-  @apply inline-flex items-center justify-center;
+[data-theme="dark"] .loading-container p {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .spinner-large {
+  border-color: #334155;
+  border-top-color: #3B82F6;
+}
+
+/* ================================
+   ACCESSIBILITY
+   ================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner,
+  .spinner-large {
+    animation: none;
+    border-top-color: transparent;
+  }
 }

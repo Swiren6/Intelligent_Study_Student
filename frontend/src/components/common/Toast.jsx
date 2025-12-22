@@ -1,4 +1,3 @@
-// 🔔 src/components/common/Toast.jsx
 import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import PropTypes from 'prop-types';

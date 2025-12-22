@@ -1,20 +1,53 @@
-// 🔔 src/context/ToastContext.jsx
-import { createContext, useState, useCallback } from 'react';
-import PropTypes from 'prop-types';
-import Toast from '../components/common/Toast';
+import { createContext, useContext, useState, useCallback } from 'react';
+import '../styles/Toast.css';
 
-export const ToastContext = createContext(null);
+// Créer le contexte
+const ToastContext = createContext(null);
 
-export function ToastProvider({ children }) {
+// Hook personnalisé pour utiliser le contexte
+export const useToast = () => {
+  const context = useContext(ToastContext);
+  if (!context) {
+    throw new Error('useToast must be used within a ToastProvider');
+  }
+  return context;
+};
+
+// Composant Toast individuel
+const Toast = ({ id, message, type, onClose }) => {
+  const icons = {
+    success: '✓',
+    error: '✕',
+    warning: '⚠',
+    info: 'ℹ',
+  };
+
+  return (
+    <div className={`toast toast-${type}`}>
+      <div className="toast-icon">{icons[type]}</div>
+      <div className="toast-message">{message}</div>
+      <button 
+        onClick={() => onClose(id)} 
+        className="toast-close"
+        aria-label="Fermer"
+      >
+        ✕
+      </button>
+    </div>
+  );
+};
+
+// Provider du contexte
+export const ToastProvider = ({ children }) => {
   const [toasts, setToasts] = useState([]);
 
-  const showToast = useCallback((message, type = 'info', duration = 3000) => {
-    const id = Date.now();
-    const newToast = { id, message, type, duration };
+  // Fonction pour afficher un toast
+  const showToast = useCallback((message, type = 'info', duration = 4000) => {
+    const id = Date.now() + Math.random();
     
-    setToasts(prev => [...prev, newToast]);
+    setToasts(prev => [...prev, { id, message, type }]);
 
-    // Auto-remove après la durée spécifiée
+    // Auto-suppression après la durée spécifiée
     if (duration > 0) {
       setTimeout(() => {
         removeToast(id);
@@ -24,52 +57,61 @@ export function ToastProvider({ children }) {
     return id;
   }, []);
 
+  // Fonction pour supprimer un toast
   const removeToast = useCallback((id) => {
     setToasts(prev => prev.filter(toast => toast.id !== id));
   }, []);
 
-  const showSuccess = useCallback((message, duration) => {
+  // Fonction pour supprimer tous les toasts
+  const clearToasts = useCallback(() => {
+    setToasts([]);
+  }, []);
+
+  // Raccourcis pour les différents types
+  const success = useCallback((message, duration) => {
     return showToast(message, 'success', duration);
   }, [showToast]);
 
-  const showError = useCallback((message, duration) => {
+  const error = useCallback((message, duration) => {
     return showToast(message, 'error', duration);
   }, [showToast]);
 
-  const showWarning = useCallback((message, duration) => {
+  const warning = useCallback((message, duration) => {
     return showToast(message, 'warning', duration);
   }, [showToast]);
 
-  const showInfo = useCallback((message, duration) => {
+  const info = useCallback((message, duration) => {
     return showToast(message, 'info', duration);
   }, [showToast]);
 
   const value = {
     showToast,
-    showSuccess,
-    showError,
-    showWarning,
-    showInfo,
     removeToast,
+    clearToasts,
+    success,
+    error,
+    warning,
+    info,
   };
 
   return (
     <ToastContext.Provider value={value}>
       {children}
+      
+      {/* Container des toasts */}
       <div className="toast-container">
         {toasts.map(toast => (
           <Toast
             key={toast.id}
+            id={toast.id}
             message={toast.message}
             type={toast.type}
-            onClose={() => removeToast(toast.id)}
+            onClose={removeToast}
           />
         ))}
       </div>
     </ToastContext.Provider>
   );
-}
-
-ToastProvider.propTypes = {
-  children: PropTypes.node.isRequired,
 };
+
+export default ToastContext;
