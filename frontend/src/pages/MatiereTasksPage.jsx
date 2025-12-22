@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, X, Edit, Trash2, Clock, Calendar } from 'lucide-react';
 import Navbar from '../components/Layout/Navbar';
 import API_CONFIG from '../config/api.config';
+import { useToast } from '../context/ToastContext';
 
 import '../styles/MatiereTasksPage.css';
 

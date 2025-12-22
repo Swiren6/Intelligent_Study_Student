@@ -114,13 +114,13 @@ const Sidebar = () => {
         `}
       >
         {/* Logo / Brand */}
-        <div className="h-20 flex items-center px-6 border-b-2 border-gray-200 dark:border-gray-800 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-gray-800 dark:to-gray-800">
+        <div className="h-20 flex items-center px-6 border-b-2 border-gray-200 dark:border-gray-800 bg-linear-to-r from-blue-50 to-purple-50 dark:from-gray-800 dark:to-gray-800">
           <Link to="/dashboard" className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
+            <div className="w-10 h-10 rounded-xl bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
               <span className="text-white font-bold text-lg">TF</span>
             </div>
             <div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <span className="text-2xl font-bold bg-linear-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                 TaskFlow
               </span>
               <p className="text-xs text-gray-500 dark:text-gray-400">Student Assistant</p>
@@ -134,7 +134,7 @@ const Sidebar = () => {
             onClick={() => setIsProfileOpen(!isProfileOpen)}
             className="w-full flex items-center space-x-3 p-3 rounded-xl hover:bg-white dark:hover:bg-gray-800 transition-all duration-200 group"
           >
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-green-500 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
+            <div className="w-12 h-12 rounded-xl bg-linear-to-br from-blue-500 to-green-500 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
               <User className="w-6 h-6 text-white" />
             </div>
             <div className="flex-1 text-left min-w-0">
@@ -200,7 +200,7 @@ const Sidebar = () => {
                     transition-all duration-200 group relative overflow-hidden
                     ${
                       active
-                        ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg'
+                        ? 'bg-linear-to-r from-blue-500 to-purple-600 text-white shadow-lg'
                         : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
                     }
                   `}
