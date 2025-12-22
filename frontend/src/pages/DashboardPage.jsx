@@ -283,7 +283,7 @@ const DashboardPage = () => {
 
   return (
     <div className="dashboard-container">
-      {/* <Sidebar /> */}
+      { <Sidebar />}
 
       {/* Main Content */}
       <main className="dashboard-main">
@@ -522,5 +522,6 @@ const DashboardPage = () => {
     </div>
   );
 };
+
 
 export default DashboardPage;
