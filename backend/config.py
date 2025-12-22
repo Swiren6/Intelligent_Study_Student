@@ -44,7 +44,7 @@ class DevelopmentConfig(Config):
     """Configuration pour le développement"""
     DEBUG = True
     TESTING = False
-    SQLALCHEMY_ECHO = False  # Mettre True pour voir les requêtes SQL
+    SQLALCHEMY_ECHO = False 
 
 
 class TestingConfig(Config):

@@ -1,0 +1,79 @@
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { lazy, Suspense } from "react";
+import ProtectedRoute from "./components/ProtectedRoute";
+
+// Import des styles - ORDRE IMPORTANT
+import "./styles/global.css"; // Variables CSS globales en premier
+import "./App.css";
+
+import { AuthProvider } from "./context/AuthContext";
+import { ToastProvider } from "./context/ToastContext";
+import ScheduleUploadPage from './pages/ScheduleUploadPage';
+
+import Loader from "./components/common/Loader";
+
+// Lazy loading des composants
+const Landing = lazy(() => import("./components/Landing"));
+const Login = lazy(() => import("./components/Auth/Login"));
+const SignUp = lazy(() => import("./components/Auth/SignUp"));
+const DashboardPage = lazy(() => import("./pages/DashboardPage"));
+const MatiereTasksPage = lazy(() => import("./pages/MatiereTasksPage"));
+const CalendarPage = lazy(() => import("./pages/CalendarPage"));
+
+function App() {
+  return (
+    <Router>
+      <AuthProvider>
+        <ToastProvider>
+          <Suspense fallback={<Loader fullScreen />}>
+            <Routes>
+              {/* Routes publiques */}
+              <Route path="/" element={<Landing />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<SignUp />} />
+              
+              {/* Routes protégées */}
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <DashboardPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/matiere/:matiereId/tasks"
+                element={
+                  <ProtectedRoute>
+                    <MatiereTasksPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route 
+                path="/calendar" 
+                element={
+                  <ProtectedRoute>
+                    <CalendarPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/schedule/upload" 
+                element={
+                  <ProtectedRoute>
+                    <ScheduleUploadPage />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              {/* Redirection par défaut */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Suspense>
+        </ToastProvider>
+      </AuthProvider>
+    </Router>
+  );
+}
+
+export default App;

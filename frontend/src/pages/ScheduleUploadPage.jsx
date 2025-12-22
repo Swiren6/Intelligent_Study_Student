@@ -9,14 +9,11 @@ import Navbar from '../components/Layout/Navbar';
 import PDFUploader from '../components/Schedule/PDFUploader';
 import CoursesList from '../components/Schedule/CoursesList';
 import FreeSlotsList from '../components/Schedule/FreeSlotsList';
-import { useAPI } from '../hooks/useApi';
-import { useToast } from '../hooks/useToast';
 import API_CONFIG from '../config/api.config';
 import '../styles/ScheduleUpload.css';
 
 export default function ScheduleUploadPage() {
   const navigate = useNavigate();
-  const api = useAPI();
   const { showSuccess, showError, showInfo } = useToast();
 
   const [schedules, setSchedules] = useState([]);

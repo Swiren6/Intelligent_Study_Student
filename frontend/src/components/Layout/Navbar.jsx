@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import '../../styles/navbar.css';
 import ThemeToggle from '../UI/ThemeToggle';
 
+
 export default function Navbar() {
   const navigate = useNavigate();
   const [user, setUser] = useState({});

@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import "../../styles/Button.css";
 
 /**
- * 🎨 Composant Button réutilisable pour TaskFlow
+ * 🎨 Composant Button réutilisable pour Taskora
  * 
  * @example
  * <Button label="Connexion" variant="primary" onClick={handleClick} />

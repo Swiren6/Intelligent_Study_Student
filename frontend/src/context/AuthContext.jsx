@@ -1,232 +1,192 @@
-import { createContext, useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import PropTypes from 'prop-types';
-import API_CONFIG from '../config/api.config';
+import { createContext, useContext, useState, useEffect } from 'react';
 
-export const AuthContext = createContext(null);
+// Créer le contexte
+const AuthContext = createContext(null);
 
-export function AuthProvider({ children }) {
+// Hook personnalisé pour utiliser le contexte
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+
+// Provider du contexte
+export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Vérifier l'authentification au chargement
+  // Charger l'utilisateur depuis localStorage au démarrage
   useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
-    const token = localStorage.getItem('access_token');
-    
-    if (token) {
+    const loadUser = () => {
       try {
-        const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH.PROFILE}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setUser(data.user || data);
-        } else if (response.status === 401) {
-          // Token expiré, essayer de rafraîchir
-          await refreshToken();
-        } else {
-          localStorage.removeItem('access_token');
-          localStorage.removeItem('refresh_token');
+        const token = localStorage.getItem('token');
+        const savedUser = localStorage.getItem('user');
+        
+        if (token && savedUser) {
+          setUser(JSON.parse(savedUser));
+          setIsAuthenticated(true);
         }
       } catch (error) {
-        console.error('Auth check failed:', error);
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
+        console.error('Erreur lors du chargement de l\'utilisateur:', error);
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      } finally {
+        setLoading(false);
       }
-    }
-    
-    setLoading(false);
-  };
+    };
 
-  const refreshToken = async () => {
-    const refresh = localStorage.getItem('refresh_token');
-    
-    if (!refresh) {
-      return false;
-    }
-
-    try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH.REFRESH}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${refresh}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        localStorage.setItem('access_token', data.access_token);
-        
-        // Recharger le profil utilisateur
-        await checkAuth();
-        return true;
-      } else {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        return false;
-      }
-    } catch (error) {
-      console.error('Token refresh failed:', error);
-      return false;
-    }
-  };
-
-  const login = useCallback(async (credentials) => {
-    try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH.LOGIN}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: credentials.email,
-          mot_de_passe: credentials.password,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        // Stocker les tokens
-        localStorage.setItem('access_token', data.access_token);
-        localStorage.setItem('refresh_token', data.refresh_token);
-        
-        // Stocker les informations utilisateur
-        setUser(data.user);
-        
-        return { success: true, user: data.user };
-      } else {
-        throw new Error(data.message || 'Erreur de connexion');
-      }
-    } catch (error) {
-      throw new Error(error.message || 'Erreur de connexion');
-    }
+    loadUser();
   }, []);
 
-  const register = useCallback(async (userData) => {
+  // Fonction de connexion
+  const login = async (email, password) => {
     try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH.REGISTER}`, {
+      // TODO: Remplacer par votre appel API réel
+      // Exemple d'appel API :
+      /*
+      const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          nom: userData.fullName.split(' ').pop(),
-          prenom: userData.fullName.split(' ')[0],
-          email: userData.email,
-          mot_de_passe: userData.password,
-        }),
+        body: JSON.stringify({ email, password }),
       });
 
+      if (!response.ok) {
+        throw new Error('Identifiants incorrects');
+      }
+
       const data = await response.json();
+      */
 
-      if (response.ok) {
-        return { success: true };
+      // SIMULATION (à remplacer par votre API)
+      // Simuler un délai réseau
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Vérification simple pour la démo
+      if (email && password.length >= 6) {
+        const mockUser = {
+          id: '1',
+          name: email.split('@')[0],
+          email: email,
+        };
+
+        const mockToken = 'mock-jwt-token-' + Date.now();
+
+        // Sauvegarder dans localStorage
+        localStorage.setItem('token', mockToken);
+        localStorage.setItem('user', JSON.stringify(mockUser));
+
+        // Mettre à jour l'état
+        setUser(mockUser);
+        setIsAuthenticated(true);
+
+        return mockUser;
       } else {
-        throw new Error(data.message || 'Erreur lors de l\'inscription');
+        throw new Error('Identifiants incorrects');
       }
     } catch (error) {
-      throw new Error(error.message || 'Erreur lors de l\'inscription');
+      console.error('Erreur de connexion:', error);
+      throw error;
     }
-  }, []);
+  };
 
-  const logout = useCallback(async () => {
+  // Fonction d'inscription
+  const signup = async (name, email, password) => {
     try {
-      const token = localStorage.getItem('access_token');
-      
-      if (token) {
-        await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH.LOGOUT}`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
+      // TODO: Remplacer par votre appel API réel
+      // Exemple d'appel API :
+      /*
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name, email, password }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Erreur lors de l\'inscription');
       }
+
+      const data = await response.json();
+      */
+
+      // SIMULATION (à remplacer par votre API)
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Vérifications simples
+      if (!name || name.length < 2) {
+        throw new Error('Le nom doit contenir au moins 2 caractères');
+      }
+      if (!email || !email.includes('@')) {
+        throw new Error('Email invalide');
+      }
+      if (!password || password.length < 8) {
+        throw new Error('Le mot de passe doit contenir au moins 8 caractères');
+      }
+
+      const mockUser = {
+        id: '1',
+        name: name,
+        email: email,
+      };
+
+      const mockToken = 'mock-jwt-token-' + Date.now();
+
+      // Sauvegarder dans localStorage
+      localStorage.setItem('token', mockToken);
+      localStorage.setItem('user', JSON.stringify(mockUser));
+
+      // Mettre à jour l'état
+      setUser(mockUser);
+      setIsAuthenticated(true);
+
+      return mockUser;
     } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
+      console.error('Erreur d\'inscription:', error);
+      throw error;
+    }
+  };
+
+  // Fonction de déconnexion
+  const logout = () => {
+    try {
+      // Supprimer du localStorage
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+
+      // Réinitialiser l'état
       setUser(null);
-      navigate('/login');
-    }
-  }, [navigate]);
-
-  const updateProfile = useCallback(async (updates) => {
-    try {
-      const token = localStorage.getItem('access_token');
-      
-      const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH.PROFILE}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(updates),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setUser(data.user || data);
-        return { success: true };
-      } else {
-        throw new Error(data.message || 'Erreur lors de la mise à jour');
-      }
+      setIsAuthenticated(false);
     } catch (error) {
-      throw new Error(error.message || 'Erreur lors de la mise à jour');
+      console.error('Erreur de déconnexion:', error);
     }
-  }, []);
+  };
 
-  const changePassword = useCallback(async (oldPassword, newPassword) => {
+  // Fonction de mise à jour du profil
+  const updateUser = (updatedData) => {
     try {
-      const token = localStorage.getItem('access_token');
-      
-      const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH.CHANGE_PASSWORD}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ancien_mot_de_passe: oldPassword,
-          nouveau_mot_de_passe: newPassword,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        return { success: true };
-      } else {
-        throw new Error(data.message || 'Erreur lors du changement de mot de passe');
-      }
+      const updatedUser = { ...user, ...updatedData };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      setUser(updatedUser);
     } catch (error) {
-      throw new Error(error.message || 'Erreur lors du changement de mot de passe');
+      console.error('Erreur de mise à jour du profil:', error);
     }
-  }, []);
+  };
 
+  // Valeur du contexte
   const value = {
     user,
     loading,
+    isAuthenticated,
     login,
-    register,
+    signup,
     logout,
-    updateProfile,
-    changePassword,
-    refreshToken,
-    isAuthenticated: !!user,
+    updateUser,
   };
 
   return (
@@ -234,8 +194,6 @@ export function AuthProvider({ children }) {
       {children}
     </AuthContext.Provider>
   );
-}
-
-AuthProvider.propTypes = {
-  children: PropTypes.node.isRequired,
 };
+
+export default AuthContext;

@@ -21,7 +21,7 @@ class Cours(db.Model):
     
     # Informations du cours
     nom = db.Column(db.String(200), nullable=False)
-    type_cours = db.Column(db.String(50))  # 'cours', 'td', 'tp', 'examen'
+    type_cours = db.Column(db.String(50)) 
     
     # Horaires
     jour_semaine = db.Column(db.String(20), nullable=False)  # 'lundi', 'mardi', etc.

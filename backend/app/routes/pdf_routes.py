@@ -2,7 +2,9 @@ from flask import Blueprint, request, jsonify
 from werkzeug.utils import secure_filename
 import os
 from app import db
-from app.models.emploi_du_temps import EmploiDuTemps, Cours
+from app.models.emploi_du_temps import EmploiDuTemps
+from app.models.cours import Cours
+
 from app.utils.decorators import jwt_required_custom, handle_validation_error
 from app.utils.validators import validate_file, ValidationError
 from app.utils.helpers import success_response, error_response, save_uploaded_file, delete_file
