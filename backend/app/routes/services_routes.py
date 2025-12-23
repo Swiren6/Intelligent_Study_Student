@@ -1,6 +1,5 @@
 """
 Routes pour les services IA (Planning Generator, PDF Analyzer, Notifications)
-VERSION MODIFIÉE: Support format frontend pour génération planning
 """
 
 from flask import Blueprint, request, jsonify
@@ -29,21 +28,7 @@ def generer_planning(current_user):
     """
     Génère automatiquement un planning d'étude optimisé
     
-    **NOUVEAU: Support de deux formats d'entrée**
-    
-    Format 1 (Frontend React):
-    {
-        "subject_ids": [1, 2, 3],
-        "preferences": {
-            "sessionDuration": 120,
-            "studyDaysPerWeek": 5,
-            "preferredStartTime": "09:00",
-            "preferredEndTime": "18:00",
-            "includeWeekends": false
-        }
-    }
-    
-    Format 2 (Original):
+    Body JSON:
     {
         "date_debut": "2024-01-15",
         "date_fin": "2024-03-15",
@@ -55,85 +40,30 @@ def generer_planning(current_user):
     try:
         data = request.get_json()
         
-        if not data:
+        # Validation
+        if not data or 'date_debut' not in data or 'date_fin' not in data:
             return error_response(
-                'Données manquantes',
-                'Le corps de la requête ne peut pas être vide',
+                'Champs manquants',
+                'date_debut et date_fin sont requis',
                 400
             )
         
-        # NOUVEAU: Détection automatique du format
-        if 'subject_ids' in data:
-            # ========================================
-            # FORMAT FRONTEND (React)
-            # ========================================
-            print("📱 Format frontend détecté")
-            
-            # Calculer dates automatiquement
-            # Par défaut: 2 semaines à partir d'aujourd'hui
-            date_debut = datetime.now().date()
-            date_fin = date_debut + timedelta(weeks=2)
-            
-            # Extraire préférences
-            preferences = data.get('preferences', {})
-            
-            # Convertir sessionDuration (minutes) en heures par jour
-            session_duration_minutes = preferences.get('sessionDuration', 120)
-            # Si l'étudiant veut des sessions de 2h, on peut faire 2-3 sessions par jour = 4-6h
-            heures_etude_par_jour = min(8.0, (session_duration_minutes / 60) * 3)
-            
-            # Jours d'étude par semaine
-            jours_etude_par_semaine = preferences.get('studyDaysPerWeek', 5)
-            
-            # Gestion des weekends
-            include_weekends = preferences.get('includeWeekends', False)
-            if include_weekends:
-                jours_repos = []  # Pas de repos
-            else:
-                jours_repos = ['samedi', 'dimanche']
-            
-            print(f"✓ Dates calculées: {date_debut} -> {date_fin}")
-            print(f"✓ Heures/jour: {heures_etude_par_jour}h")
-            print(f"✓ Jours/semaine: {jours_etude_par_semaine}")
-            print(f"✓ Jours repos: {jours_repos}")
-            
-        else:
-            # ========================================
-            # FORMAT ORIGINAL (Backend)
-            # ========================================
-            print("🖥️  Format backend original détecté")
-            
-            # Validation des champs requis
-            if 'date_debut' not in data or 'date_fin' not in data:
-                return error_response(
-                    'Champs manquants',
-                    'date_debut et date_fin sont requis',
-                    400
-                )
-            
-            date_debut = validate_date(data['date_debut'], 'Date début')
-            date_fin = validate_date(data['date_fin'], 'Date fin')
-            
-            if date_fin <= date_debut:
-                return error_response(
-                    'Dates invalides',
-                    'La date de fin doit être après la date de début',
-                    400
-                )
-            
-            heures_etude_par_jour = data.get('heures_etude_par_jour', 4.0)
-            jours_etude_par_semaine = data.get('jours_etude_par_semaine', 6)
-            jours_repos = data.get('jours_repos', ['dimanche'])
+        date_debut = validate_date(data['date_debut'], 'Date début')
+        date_fin = validate_date(data['date_fin'], 'Date fin')
         
-        # ========================================
-        # GÉNÉRATION DU PLANNING (Commun)
-        # ========================================
-        print(f"\n🎯 Génération planning pour {current_user.nom}...")
+        if date_fin <= date_debut:
+            return error_response(
+                'Dates invalides',
+                'La date de fin doit être après la date de début',
+                400
+            )
         
-        # Créer le générateur
-        generator = PlanningGenerator(current_user)
+        heures_etude_par_jour = data.get('heures_etude_par_jour', 4.0)
+        jours_etude_par_semaine = data.get('jours_etude_par_semaine', 6)
+        jours_repos = data.get('jours_repos', ['dimanche'])
         
         # Générer le planning
+        generator = PlanningGenerator(current_user)
         planning = generator.generer_planning_automatique(
             date_debut=date_debut,
             date_fin=date_fin,
@@ -142,22 +72,13 @@ def generer_planning(current_user):
             jours_repos=jours_repos
         )
         
-        print(f"✅ Planning généré: {planning.nom}")
-        print(f"   - {planning.sessions_total} sessions")
-        print(f"   - Score qualité: {planning.score_qualite}/100")
-        
-        # Retourner le planning avec sessions et stats
         return success_response(
-            data=planning.to_dict(include_sessions=True, include_statistiques=True),
-            message='Planning généré avec succès',
-            status_code=201
+            data=planning.to_dict(),
+            message='Planning généré avec succès'
         )
         
     except Exception as e:
         db.session.rollback()
-        print(f"❌ Erreur génération planning: {e}")
-        import traceback
-        traceback.print_exc()
         return error_response('Erreur serveur', str(e), 500)
 
 
@@ -174,7 +95,7 @@ def optimiser_planning(planning_id, current_user):
             return error_response('Planning introuvable', f'Aucun planning avec l\'ID {planning_id}', 404)
         
         # Vérifier ownership
-        if planning.user_id != current_user.id:
+        if planning.utilisateur_id != current_user.id:
             return error_response('Accès refusé', 'Ce planning ne vous appartient pas', 403)
         
         # Optimiser
@@ -206,18 +127,14 @@ def analyser_pdf(emploi_id, current_user):
             return error_response('Emploi du temps introuvable', f'Aucun emploi avec l\'ID {emploi_id}', 404)
         
         # Vérifier ownership
-        if emploi.user_id != current_user.id:
+        if emploi.utilisateur_id != current_user.id:
             return error_response('Accès refusé', 'Cet emploi du temps ne vous appartient pas', 403)
-        
-        print(f"\n📄 Analyse PDF pour emploi {emploi_id}...")
         
         # Analyser
         analyzer = PDFAnalyzer(emploi)
         resultat = analyzer.analyser()
         
         if resultat['success']:
-            print(f"✅ Analyse réussie: {resultat['cours_extraits']} cours extraits")
-            
             return success_response(
                 data={
                     'emploi_du_temps': emploi.to_dict(include_cours=True),
@@ -226,13 +143,9 @@ def analyser_pdf(emploi_id, current_user):
                 message=resultat['message']
             )
         else:
-            print(f"❌ Analyse échouée: {resultat.get('error')}")
             return error_response('Erreur analyse', resultat['message'], 500)
         
     except Exception as e:
-        print(f"❌ Erreur lors de l'analyse: {e}")
-        import traceback
-        traceback.print_exc()
         return error_response('Erreur serveur', str(e), 500)
 
 
@@ -248,7 +161,7 @@ def creneaux_libres(emploi_id, current_user):
         if not emploi:
             return error_response('Emploi du temps introuvable', f'Aucun emploi avec l\'ID {emploi_id}', 404)
         
-        if emploi.user_id != current_user.id:
+        if emploi.utilisateur_id != current_user.id:
             return error_response('Accès refusé', 'Cet emploi du temps ne vous appartient pas', 403)
         
         creneaux = PDFAnalyzer.detecter_creneaux_libres(emploi)

@@ -9,7 +9,6 @@ from app.routes.planning import bp as planning
 from app.routes.pdf_routes import bp as pdf_routes
 from app.routes.notification import bp as notification
 from app.routes.services_routes import bp as services_routes
-from app.routes.stats import bp as stats  
 
 __all__ = [
     'auth',
@@ -18,11 +17,5 @@ __all__ = [
     'planning',
     'pdf_routes',
     'notification',
-    'services_routes',
-    'stats'  
+    'services_routes'
 ]
-
-
-
-
-

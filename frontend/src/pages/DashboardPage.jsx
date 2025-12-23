@@ -1,7 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import Sidebar from '../components/Dashboard/Sidebar';
+import { useNavigate } from 'react-router-dom';
+
+import '../styles/dashboard.css';
 import {
   BookOpen,
   CheckSquare,
@@ -11,19 +13,26 @@ import {
   AlertCircle,
   Award,
   Target,
-  Home,
-  BarChart3,
-  Users,
-  Settings,
-  Bell,
+  Clock3,
+  CalendarDays,
+  CalendarRange,
   ChevronRight,
-  Menu,
-  X,
+  AlertTriangle,
+  
 } from 'lucide-react';
+import Navbar from '../components/Dashboard/Navbar';
+import Sidebar from '../components/Dashboard/Sidebar.jsx';
+
+
+
+
 
 const DashboardPage = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { success } = useToast();
+  
+  // États initiaux
   const [stats, setStats] = useState({
     matieres: 7,
     taches: 12,
@@ -31,11 +40,8 @@ const DashboardPage = () => {
     plannings: 2,
     tempsEtudie: 24.5,
     tempsEstime: 40,
+    examensProchains: 4,
   });
-
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [loading, setLoading] = useState(true);
-  const [progressAnimations, setProgressAnimations] = useState({});
 
   const [recentActivities, setRecentActivities] = useState([
     {
@@ -44,7 +50,6 @@ const DashboardPage = () => {
       title: 'TP Machine Learning terminé',
       time: 'Il y a 2 heures',
       status: 'completed',
-      icon: CheckSquare,
     },
     {
       id: 2,
@@ -52,7 +57,6 @@ const DashboardPage = () => {
       title: 'Nouvelle matière ajoutée: React',
       time: 'Il y a 5 heures',
       status: 'new',
-      icon: BookOpen,
     },
     {
       id: 3,
@@ -60,15 +64,6 @@ const DashboardPage = () => {
       title: 'Planning de la semaine généré',
       time: 'Hier',
       status: 'info',
-      icon: Calendar,
-    },
-    {
-      id: 4,
-      type: 'achievement',
-      title: 'Certification Python obtenue',
-      time: 'Il y a 3 jours',
-      status: 'completed',
-      icon: Award,
     },
   ]);
 
@@ -78,30 +73,84 @@ const DashboardPage = () => {
       title: 'Projet Django REST API',
       matiere: 'Django',
       deadline: '2 jours',
-      progress: 0,
-      targetProgress: 35,
+      progress: 35,
       color: '#F59E0B',
-      priority: 'high',
     },
     {
       id: 2,
       title: 'Révision ML/DL chapitres 1-3',
       matiere: 'Machine Learning',
       deadline: '5 jours',
-      progress: 0,
-      targetProgress: 65,
+      progress: 65,
       color: '#8B5CF6',
-      priority: 'medium',
     },
     {
       id: 3,
       title: 'Projet React Dashboard',
       matiere: 'React',
       deadline: '7 jours',
-      progress: 0,
-      targetProgress: 50,
+      progress: 50,
       color: '#61DAFB',
-      priority: 'low',
+    },
+  ]);
+
+  // Nouvel état pour les examens
+  const [upcomingExams, setUpcomingExams] = useState([
+    {
+      id: 1,
+      title: 'Examen Final - Machine Learning',
+      matiere: 'Machine Learning',
+      date: '2024-06-15',
+      time: '09:00',
+      duration: '3h',
+      type: 'examen',
+      importance: 'high',
+      location: 'Salle A201',
+      professor: 'Dr. Martin',
+      color: '#EF4444',
+      joursRestants: 14,
+    },
+    {
+      id: 2,
+      title: 'Examen Partiel - Base de données',
+      matiere: 'Base de données',
+      date: '2024-06-08',
+      time: '14:00',
+      duration: '2h',
+      type: 'partiel',
+      importance: 'medium',
+      location: 'Amphi B',
+      professor: 'Prof. Dubois',
+      color: '#3B82F6',
+      joursRestants: 7,
+    },
+    {
+      id: 3,
+      title: 'Quiz - React Avancé',
+      matiere: 'React',
+      date: '2024-06-03',
+      time: '10:30',
+      duration: '1h30',
+      type: 'quiz',
+      importance: 'low',
+      location: 'Salle C105',
+      professor: 'Mme. Laurent',
+      color: '#10B981',
+      joursRestants: 2,
+    },
+    {
+      id: 4,
+      title: 'Oral - Anglais Technique',
+      matiere: 'Anglais',
+      date: '2024-06-20',
+      time: '16:00',
+      duration: '30min',
+      type: 'oral',
+      importance: 'medium',
+      location: 'Bureau 304',
+      professor: 'Mr. Smith',
+      color: '#8B5CF6',
+      joursRestants: 19,
     },
   ]);
 
@@ -109,527 +158,374 @@ const DashboardPage = () => {
     // Afficher un message de bienvenue
     success(`Bienvenue ${user?.nom || 'étudiant'} ! 👋`);
 
-    // Simulation de chargement
-    const timer = setTimeout(() => {
-      setLoading(false);
-      
-      // Animer les barres de progression
-      urgentTasks.forEach((task, index) => {
-        setTimeout(() => {
-          animateProgress(task.id, task.targetProgress);
-        }, 300 * (index + 1));
-      });
-    }, 1000);
-
-    return () => clearTimeout(timer);
+    // TODO: Charger les vraies données depuis l'API
+    // fetchDashboardStats();
+    
+    // Mettre à jour les jours restants chaque jour
+    const updateDaysRemaining = () => {
+      setUpcomingExams(prevExams => 
+        prevExams.map(exam => ({
+          ...exam,
+          joursRestants: calculateDaysRemaining(exam.date)
+        }))
+      );
+    };
+    
+    updateDaysRemaining();
+    
+    // Mettre à jour à minuit chaque jour
+    const now = new Date();
+    const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0);
+    const timeUntilMidnight = midnight.getTime() - now.getTime();
+    
+    const midnightTimer = setTimeout(() => {
+      updateDaysRemaining();
+      // Ensuite, mettre à jour toutes les 24h
+      setInterval(updateDaysRemaining, 24 * 60 * 60 * 1000);
+    }, timeUntilMidnight);
+    
+    return () => clearTimeout(midnightTimer);
   }, []);
 
-  const animateProgress = (taskId, targetProgress) => {
-    let currentProgress = 0;
-    const step = targetProgress / 20;
-    const interval = setInterval(() => {
-      currentProgress += step;
-      if (currentProgress >= targetProgress) {
-        currentProgress = targetProgress;
-        clearInterval(interval);
-      }
-      setProgressAnimations(prev => ({
-        ...prev,
-        [taskId]: currentProgress
-      }));
-    }, 30);
+  // Fonction pour calculer les jours restants
+  const calculateDaysRemaining = (examDate) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const exam = new Date(examDate);
+    exam.setHours(0, 0, 0, 0);
+    
+    const diffTime = exam - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    return diffDays;
   };
 
-  const StatCard = ({ 
-  icon: Icon, 
-  title, 
-  value, 
-  subtitle, 
-  color = 'blue', 
-  trend = null,
-  delay = 0,
-  percentage = null,
-  loading = false 
-}) => {
-  // Définir les couleurs pour chaque type
-  const colorMap = {
-    blue: {
-      bg: 'from-blue-500 to-blue-600',
-      light: 'bg-blue-50 dark:bg-blue-900/20',
-      icon: 'text-blue-600 dark:text-blue-400',
-      ring: 'ring-blue-500/20',
-      gradient: 'from-blue-400/20 to-blue-600/20'
-    },
-    green: {
-      bg: 'from-green-500 to-green-600',
-      light: 'bg-green-50 dark:bg-green-900/20',
-      icon: 'text-green-600 dark:text-green-400',
-      ring: 'ring-green-500/20',
-      gradient: 'from-green-400/20 to-green-600/20'
-    },
-    purple: {
-      bg: 'from-purple-500 to-purple-600',
-      light: 'bg-purple-50 dark:bg-purple-900/20',
-      icon: 'text-purple-600 dark:text-purple-400',
-      ring: 'ring-purple-500/20',
-      gradient: 'from-purple-400/20 to-purple-600/20'
-    },
-    orange: {
-      bg: 'from-orange-500 to-orange-600',
-      light: 'bg-orange-50 dark:bg-orange-900/20',
-      icon: 'text-orange-600 dark:text-orange-400',
-      ring: 'ring-orange-500/20',
-      gradient: 'from-orange-400/20 to-orange-600/20'
-    },
-    red: {
-      bg: 'from-red-500 to-red-600',
-      light: 'bg-red-50 dark:bg-red-900/20',
-      icon: 'text-red-600 dark:text-red-400',
-      ring: 'ring-red-500/20',
-      gradient: 'from-red-400/20 to-red-600/20'
+  // Fonction pour formater la date
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('fr-FR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+  };
+
+  // Fonction pour obtenir le type d'examen
+  const getExamTypeLabel = (type) => {
+    switch(type) {
+      case 'examen': return 'Examen Final';
+      case 'partiel': return 'Examen Partiel';
+      case 'quiz': return 'Quiz';
+      case 'oral': return 'Examen Oral';
+      default: return 'Examen';
     }
   };
 
-  const colors = colorMap[color] || colorMap.blue;
-
-  if (loading) {
-    return (
-      <div className="stat-card bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg relative overflow-hidden">
-        <div className="skeleton w-12 h-12 rounded-xl mb-4"></div>
-        <div className="skeleton w-3/4 h-8 rounded mb-2"></div>
-        <div className="skeleton w-1/2 h-4 rounded"></div>
-      </div>
-    );
-  }
-
-  return (
-    <div 
-      className="stat-card group relative bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-1 overflow-hidden"
-      style={{ animationDelay: `${delay}ms` }}
-    >
-      {/* Gradient background effect */}
-      <div className={`absolute inset-0 bg-gradient-to-br ${colors.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`}></div>
-      
-      {/* Animated border */}
-      <div className="absolute inset-0 rounded-2xl ring-2 ring-transparent group-hover:ring-2 group-hover:ring-opacity-50 group-hover:scale-[1.02] transition-all duration-500"></div>
-
-      <div className="relative z-10">
-        <div className="flex items-start justify-between mb-6">
-          {/* Icon with gradient background */}
-          <div className={`relative ${colors.light} rounded-2xl p-3 transform group-hover:scale-110 transition-all duration-300`}>
-            <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${colors.bg} opacity-0 group-hover:opacity-10 transition-opacity duration-300`}></div>
-            <Icon className={`w-7 h-7 ${colors.icon} relative z-10`} />
-            
-            {/* Floating particles effect */}
-            <div className="absolute -top-1 -right-1 w-3 h-3 bg-white dark:bg-gray-900 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <div className="absolute inset-0 rounded-full bg-gradient-to-br ${colors.bg} animate-ping opacity-20"></div>
-            </div>
-          </div>
-
-          {/* Trend indicator */}
-          {trend !== null && (
-            <div className={`flex items-center space-x-1 px-3 py-1.5 rounded-full ${
-              trend > 0 
-                ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300' 
-                : 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300'
-            } transition-all duration-300 group-hover:scale-105`}>
-              {trend > 0 ? (
-                <svg className="w-4 h-4 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                </svg>
-              ) : (
-                <svg className="w-4 h-4 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                </svg>
-              )}
-              <span className="font-bold text-sm">
-                {trend > 0 ? '+' : ''}{trend}%
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* Value with counter animation */}
-        <div className="mb-2">
-          <div className="flex items-end space-x-2">
-            <h3 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight group-hover:scale-105 transition-transform duration-300 inline-block">
-              {value}
-            </h3>
-            {percentage !== null && (
-              <div className="relative mb-1">
-                <div className={`text-sm font-bold px-2 py-1 rounded-full ${colors.light} ${colors.icon} transition-all duration-300 group-hover:scale-110`}>
-                  {percentage}%
-                </div>
-                <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-current opacity-0 group-hover:opacity-30 transition-opacity duration-300"></div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Title with animated underline */}
-        <div className="relative">
-          <p className="text-base font-semibold text-gray-700 dark:text-gray-300 mb-1 inline-block">
-            {title}
-          </p>
-          <div className={`absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r ${colors.bg} group-hover:w-full transition-all duration-500`}></div>
-        </div>
-
-        {/* Subtitle with icon */}
-        {subtitle && (
-          <div className="flex items-center mt-3 space-x-2 opacity-80 group-hover:opacity-100 transition-opacity duration-300">
-            <svg className={`w-4 h-4 ${colors.icon}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
-              {subtitle}
-            </p>
-          </div>
-        )}
-
-        {/* Progress bar for percentage cards */}
-        {percentage !== null && (
-          <div className="mt-4">
-            <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
-              <span>Progression</span>
-              <span className="font-semibold">{percentage}%</span>
-            </div>
-            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
-              <div 
-                className="h-2 rounded-full bg-gradient-to-r transition-all duration-1000 ease-out"
-                style={{
-                  width: `${percentage}%`,
-                  background: `linear-gradient(90deg, ${colors.bg.replace('from-', '').replace('to-', '').split(' ')[0]}, ${colors.bg.split(' ')[1]})`
-                }}
-              ></div>
-            </div>
-          </div>
-        )}
-
-        {/* Interactive button for actions */}
-        <button className="absolute bottom-4 right-4 w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 hover:scale-110">
-          <svg className="w-4 h-4 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
-      </div>
-    </div>
-  );
-};
-
-// Utilisation améliorée dans le dashboard :
-<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-  <StatCard
-    icon={BookOpen}
-    title="Matières actives"
-    value="07"
-    subtitle="7 matières ce semestre"
-    color="blue"
-    trend={12}
-    delay={100}
-  />
-  <StatCard
-    icon={CheckSquare}
-    title="Tâches en cours"
-    value={`${stats.tachesCompletees}/${stats.taches}`}
-    subtitle="Dernière tâche: il y a 2h"
-    color="green"
-    trend={8}
-    percentage={Math.round((stats.tachesCompletees / stats.taches) * 100)}
-    delay={200}
-  />
-  <StatCard
-    icon={Calendar}
-    title="Plannings actifs"
-    value="02"
-    subtitle="2 plannings cette semaine"
-    color="purple"
-    delay={300}
-  />
-  <StatCard
-    icon={Clock}
-    title="Temps d'étude"
-    value={`${stats.tempsEtudie}h`}
-    subtitle={`${stats.tempsEstime}h estimées`}
-    color="orange"
-    trend={-5}
-    delay={400}
-  />
-</div>
-
-  const ProgressBar = ({ progress, color, taskId }) => {
-    const currentProgress = progressAnimations[taskId] || progress;
-    
-    return (
-      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
-        <div
-          className="progress-bar h-2 rounded-full transition-all duration-300 ease-out"
-          style={{
-            width: `${currentProgress}%`,
-            backgroundColor: color,
-          }}
-        />
-      </div>
-    );
+  // Fonction pour obtenir la couleur d'importance
+  const getImportanceColor = (importance) => {
+    switch(importance) {
+      case 'high': return 'bg-red-100 text-red-800 border-red-200';
+      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'low': return 'bg-green-100 text-green-800 border-green-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
   };
 
-  if (loading) {
-    return (
-      <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <div className="spinner mx-auto mb-4"></div>
-            <p className="text-gray-600 dark:text-gray-400">Chargement du dashboard...</p>
-          </div>
+  const handleViewAllExams = () => {
+    navigate('/dashboard/calendarPage');
+  };
+
+  const handleViewExamDetails = (examId) => {
+    navigate(`/dashboard/exams/${examId}`);
+  };
+
+  const StatCard = ({ icon: Icon, title, value, subtitle, color, trend }) => (
+    <div className="stat-card">
+      <div className="flex items-center justify-between mb-4">
+        <div className={`stat-icon-container ${color}`}>
+          <Icon className={`stat-icon ${color}`} />
         </div>
+        {trend !== undefined && (
+          <span className={trend > 0 ? 'trend-positive' : 'trend-negative'}>
+            {trend > 0 ? '+' : ''}{trend}%
+          </span>
+        )}
       </div>
-    );
-  }
+      <h3 className="stat-value">{value}</h3>
+      <p className="stat-title">{title}</p>
+      {subtitle && (
+        <p className="stat-subtitle">{subtitle}</p>
+      )}
+    </div>
+  );
+
+  const ProgressBar = ({ progress, color }) => (
+    <div className="progress-bar-container">
+      <div
+        className="progress-bar-fill"
+        style={{
+          width: `${progress}%`,
+          backgroundColor: color,
+        }}
+      />
+    </div>
+  );
+
+  const getActivityIcon = (type) => {
+    switch (type) {
+      case 'tache':
+        return CheckSquare;
+      case 'matiere':
+        return BookOpen;
+      case 'planning':
+        return Calendar;
+      case 'examen':
+        return Award;
+      default:
+        return TrendingUp;
+    }
+  };
 
   return (
-    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Sidebar */}
-      <div className={`sidebar fixed lg:relative inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 ${
-        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      } lg:translate-x-0`}>
-        <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      </div>
-
-      {/* Overlay pour mobile */}
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+    <div className="dashboard-container">
+     
+    <Navbar></Navbar>
+      <Sidebar></Sidebar>
 
       {/* Main Content */}
-      <main className="flex-1 p-4 lg:p-8 transition-all duration-300">
+      <main className="dashboard-main">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="lg:hidden p-2 rounded-lg bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-all"
-              >
-                {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-              </button>
-              <div>
-                <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-1">
-                  Tableau de bord
-                </h1>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Bon retour, <span className="font-semibold gradient-text">{user?.nom || 'étudiant'}</span> !
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <button className="p-2 rounded-full bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-all relative notification-dot">
-                <Bell className="w-5 h-5" />
-              </button>
-              <div className="hidden md:flex items-center space-x-3 px-4 py-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                  <span className="text-white font-semibold text-sm">
-                    {user?.nom?.charAt(0) || 'E'}
-                  </span>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">
-                    {user?.nom || 'Étudiant'}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Étudiant</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-8">
-            <StatCard
-              icon={BookOpen}
-              title="Matières actives"
-              value={stats.matieres}
-              subtitle="7 matières ce semestre"
-              color="blue"
-              trend={12}
-              delay={100}
-            />
-            <StatCard
-              icon={CheckSquare}
-              title="Tâches en cours"
-              value={`${stats.tachesCompletees}/${stats.taches}`}
-              subtitle={`${Math.round((stats.tachesCompletees / stats.taches) * 100)}% complétées`}
-              color="green"
-              trend={8}
-              delay={200}
-            />
-            <StatCard
-              icon={Calendar}
-              title="Plannings actifs"
-              value={stats.plannings}
-              subtitle="2 plannings cette semaine"
-              color="purple"
-              delay={300}
-            />
-            <StatCard
-              icon={Clock}
-              title="Temps d'étude"
-              value={`${stats.tempsEtudie}h`}
-              subtitle={`${stats.tempsEstime}h estimées`}
-              color="orange"
-              trend={-5}
-              delay={400}
-            />
-          </div>
+        <div className="dashboard-header mb-8">
+          <h1 className="text-3xl font-bold">Tableau de bord</h1>
+          <p>
+            Bienvenue, {user?.nom || 'étudiant'} ! Voici un aperçu de vos études.
+          </p>
         </div>
 
-        {/* Two Columns Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6 mb-6">
+        {/* Stats Grid */}
+        <div className="stats-grid">
+          <StatCard
+            icon={BookOpen}
+            title="Matières actives"
+            value={stats.matieres}
+            subtitle="7 matières ce semestre"
+            color="blue"
+            trend={12}
+          />
+          <StatCard
+            icon={CheckSquare}
+            title="Tâches en cours"
+            value={`${stats.tachesCompletees}/${stats.taches}`}
+            subtitle={`${Math.round((stats.tachesCompletees / stats.taches) * 100)}% complétées`}
+            color="green"
+            trend={8}
+          />
+          <StatCard
+            icon={Award}
+            title="Examens prochains"
+            value={stats.examensProchains}
+            subtitle={`${upcomingExams.filter(e => e.joursRestants <= 7).length} dans les 7 jours`}
+            color="red"
+          />
+          <StatCard
+            icon={Clock}
+            title="Temps d'étude"
+            value={`${stats.tempsEtudie}h`}
+            subtitle={`${stats.tempsEstime}h estimées`}
+            color="orange"
+            trend={-5}
+          />
+        </div>
+
+        {/* Three Columns Layout */}
+        <div className="three-columns-grid">
           {/* Tâches urgentes */}
-          <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl p-4 lg:p-6 shadow-sm card-hover">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg lg:text-xl font-bold text-gray-900 dark:text-white flex items-center">
-                <div className="relative">
-                  <AlertCircle className="w-5 h-5 text-red-500 mr-2 animate-pulse" />
-                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></div>
-                </div>
+          <div className="card">
+            <div className="card-header">
+              <h2 className="card-title">
+                <AlertCircle className="card-icon text-red-500" />
                 Tâches urgentes
               </h2>
-              <button className="btn-gradient text-sm text-blue-600 dark:text-blue-400 font-semibold px-3 py-1 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all">
-                Voir tout <ChevronRight className="w-4 h-4 inline ml-1" />
+              <button 
+                className="text-sm text-blue-600 dark:text-blue-400 hover:underline" 
+                onClick={() => navigate('/dashboard/tasks')}
+              >
+                Voir tout
               </button>
             </div>
 
             <div className="space-y-4">
               {urgentTasks.map((task) => (
-                <div
-                  key={task.id}
-                  className={`p-4 border rounded-lg transition-all duration-300 hover:shadow-md transform hover:-translate-y-1 ${
-                    task.priority === 'high' 
-                      ? 'priority-high border-red-200 dark:border-red-800' 
-                      : task.priority === 'medium'
-                      ? 'priority-medium border-yellow-200 dark:border-yellow-800'
-                      : 'priority-low border-green-200 dark:border-green-800'
-                  }`}
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
-                        {task.title}
-                      </h3>
-                      <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
+                <div key={task.id} className="task-item">
+                  <div className="task-header">
+                    <div>
+                      <h3 className="task-title">{task.title}</h3>
+                      <div className="task-meta">
                         <span
-                          className="w-2 h-2 rounded-full animate-pulse"
+                          className="task-color-dot"
                           style={{ backgroundColor: task.color }}
                         />
                         <span>{task.matiere}</span>
                         <span>•</span>
-                        <span className={`font-semibold ${
-                          task.deadline.includes('2 jours') 
-                            ? 'text-red-600 dark:text-red-400'
-                            : task.deadline.includes('5 jours')
-                            ? 'text-yellow-600 dark:text-yellow-400'
-                            : 'text-green-600 dark:text-green-400'
-                        }`}>
+                        <span className="text-red-600">
                           Dans {task.deadline}
                         </span>
                       </div>
                     </div>
-                    <span className="text-sm font-bold text-gray-700 dark:text-gray-300 ml-4">
-                      {Math.round(progressAnimations[task.id] || task.progress)}%
-                    </span>
+                    <span className="task-progress">{task.progress}%</span>
                   </div>
-                  <ProgressBar progress={task.progress} color={task.color} taskId={task.id} />
+                  <ProgressBar progress={task.progress} color={task.color} />
                 </div>
               ))}
             </div>
           </div>
 
+          {/* Calendrier des examens */}
+          <div className="card">
+            <div className="card-header">
+              <h2 className="card-title">
+                <CalendarDays className="card-icon text-purple-500" />
+                Calendrier des examens
+              </h2>
+              <button 
+                className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                onClick={handleViewAllExams}
+              >
+                Voir tout
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {upcomingExams
+                .sort((a, b) => new Date(a.date) - new Date(b.date))
+                .slice(0, 4) // Afficher seulement les 4 prochains
+                .map((exam) => (
+                  <div 
+                    key={exam.id} 
+                    className="exam-item"
+                    onClick={() => handleViewExamDetails(exam.id)}
+                  >
+                    <div className="exam-header">
+                      <div className="exam-date-indicator" style={{ backgroundColor: exam.color }}>
+                        <span className="exam-day">{new Date(exam.date).getDate()}</span>
+                        <span className="exam-month">
+                          {new Date(exam.date).toLocaleDateString('fr-FR', { month: 'short' })}
+                        </span>
+                      </div>
+                      <div className="exam-info">
+                        <h3 className="exam-title">{exam.title}</h3>
+                        <div className="exam-meta">
+                          <span className="exam-matiere">{exam.matiere}</span>
+                          <span className="exam-separator">•</span>
+                          <span className="exam-time">{exam.time} • {exam.duration}</span>
+                          <span className="exam-separator">•</span>
+                          <span className="exam-location">{exam.location}</span>
+                        </div>
+                      </div>
+                      <div className="exam-actions">
+                        <span className={`exam-importance ${getImportanceColor(exam.importance)}`}>
+                          {exam.importance === 'high' ? 'Haute' : exam.importance === 'medium' ? 'Moyenne' : 'Basse'}
+                        </span>
+                        <ChevronRight className="w-4 h-4 text-gray-400" />
+                      </div>
+                    </div>
+                    <div className="exam-footer">
+                      <div className="exam-days-left">
+                        <AlertTriangle className={`w-4 h-4 ${exam.joursRestants <= 3 ? 'text-red-500' : exam.joursRestants <= 7 ? 'text-yellow-500' : 'text-green-500'}`} />
+                        <span className={`font-semibold ${exam.joursRestants <= 3 ? 'text-red-600' : exam.joursRestants <= 7 ? 'text-yellow-600' : 'text-green-600'}`}>
+                          {exam.joursRestants === 0 ? "Aujourd'hui" : 
+                           exam.joursRestants === 1 ? "Demain" : 
+                           `Dans ${exam.joursRestants} jours`}
+                        </span>
+                      </div>
+                      <span className="exam-type">{getExamTypeLabel(exam.type)}</span>
+                    </div>
+                  </div>
+                ))}
+            </div>
+
+            {/* Prochain examen */}
+            {upcomingExams.length > 0 && (
+              <div className="next-exam-highlight">
+                <div className="next-exam-header">
+                  <h3 className="next-exam-title">Prochain examen</h3>
+                  <div className="next-exam-date">
+                    {formatDate(upcomingExams[0].date)}
+                  </div>
+                </div>
+                <div className="next-exam-details">
+                  <div className="next-exam-info">
+                    <h4 className="next-exam-name">{upcomingExams[0].title}</h4>
+                    <p className="next-exam-description">
+                      {upcomingExams[0].matiere} • {upcomingExams[0].professor}
+                    </p>
+                    <div className="next-exam-time">
+                      <Clock3 className="w-4 h-4" />
+                      <span>{upcomingExams[0].time} • {upcomingExams[0].duration}</span>
+                    </div>
+                  </div>
+                  <button 
+                    className="next-exam-button"
+                    onClick={() => handleViewExamDetails(upcomingExams[0].id)}
+                  >
+                    Détails
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Activité récente */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 lg:p-6 shadow-sm card-hover">
-            <h2 className="text-lg lg:text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center">
-              <TrendingUp className="w-5 h-5 text-blue-500 mr-2 animate-bounce" />
+          <div className="card">
+            <h2 className="card-title mb-6">
+              <TrendingUp className="card-icon text-blue-500" />
               Activité récente
             </h2>
 
             <div className="space-y-4">
-              {recentActivities.map((activity, index) => (
-                <div 
-                  key={activity.id} 
-                  className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all duration-300 transform hover:translate-x-2"
-                  style={{ animationDelay: `${index * 100}ms` }}
-                >
-                  <div className={`
-                    w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0
-                    ${activity.status === 'completed' ? 'bg-gradient-to-br from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30' : ''}
-                    ${activity.status === 'new' ? 'bg-gradient-to-br from-blue-100 to-cyan-100 dark:from-blue-900/30 dark:to-cyan-900/30' : ''}
-                    ${activity.status === 'info' ? 'bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30' : ''}
-                    transition-all duration-300 hover:scale-110
-                  `}>
-                    {activity.icon && <activity.icon className={`
-                      w-5 h-5
-                      ${activity.status === 'completed' ? 'text-green-600 dark:text-green-400' : ''}
-                      ${activity.status === 'new' ? 'text-blue-600 dark:text-blue-400' : ''}
-                      ${activity.status === 'info' ? 'text-purple-600 dark:text-purple-400' : ''}
-                    `} />}
+              {recentActivities.map((activity) => {
+                const ActivityIcon = getActivityIcon(activity.type);
+                return (
+                  <div key={activity.id} className="activity-item">
+                    <div className={`activity-icon-container ${activity.status}`}>
+                      <ActivityIcon className={`activity-icon ${activity.status}`} />
+                    </div>
+                    <div className="activity-content">
+                      <p className="activity-title">{activity.title}</p>
+                      <p className="activity-time">{activity.time}</p>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      {activity.title}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      {activity.time}
-                    </p>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
 
         {/* Quick Actions */}
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-          <button className="btn-gradient p-4 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center space-x-2 transform hover:scale-[1.02]">
-            <Target className="w-5 h-5" />
-            <span className="font-semibold">Nouvelle tâche</span>
+        <div className="quick-actions-grid">
+          <button 
+            className="action-button blue" 
+            onClick={() => navigate('/dashboard/CreateTaskForm')}
+          >
+            <Target className="action-icon" />
+            <span>Nouvelle tâche</span>
           </button>
-          <button className="btn-gradient p-4 bg-gradient-to-br from-green-500 to-green-600 text-white rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center space-x-2 transform hover:scale-[1.02]">
-            <Calendar className="w-5 h-5" />
-            <span className="font-semibold">Créer planning</span>
+          <button 
+            className="action-button green"
+            onClick={() => navigate('/dashboard/plannings/new')}
+          >
+            <Calendar className="action-icon" />
+            <span>Créer planning</span>
           </button>
-          <button className="btn-gradient p-4 bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center space-x-2 transform hover:scale-[1.02]">
-            <BookOpen className="w-5 h-5" />
-            <span className="font-semibold">Ajouter matière</span>
+          <button 
+            className="action-button purple"
+            onClick={() => navigate('/dashboard/subjects/new')}
+          >
+            <BookOpen className="action-icon" />
+            <span>Ajouter matière</span>
           </button>
-        </div>
-
-        {/* Performance Section */}
-        <div className="mt-6 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-gray-800 dark:to-gray-900 rounded-xl p-6 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center">
-              <Award className="w-5 h-5 text-yellow-500 mr-2" />
-              Performance académique
-            </h2>
-            <span className="text-sm font-semibold text-green-600">+15% vs dernier mois</span>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900 dark:text-white">87%</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Taux réussite</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900 dark:text-white">3.8</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Moyenne GPA</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900 dark:text-white">24/30</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Credits</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900 dark:text-white">Top 10%</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Classement</div>
-            </div>
-          </div>
         </div>
       </main>
     </div>

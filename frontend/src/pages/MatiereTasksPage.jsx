@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, X, Edit, Trash2, Clock, Calendar } from 'lucide-react';
-import Navbar from '../components/Layout/Navbar';
+import Navbar from '../components/Dashboard/Navbar';
 import API_CONFIG from '../config/api.config';
+import { useToast } from '../context/ToastContext';
 
 import '../styles/MatiereTasksPage.css';
+import Sidebar from '../components/Dashboard/Sidebar';
 
 export default function MatiereTasksPage() {
   const { matiereId } = useParams();
@@ -163,18 +165,14 @@ export default function MatiereTasksPage() {
   return (
     <div className="kanban-container">
       <Navbar />
+      <Sidebar />
+      
 
       <main className="kanban-main">
         {/* Header */}
         <div className="kanban-header">
           <div className="flex items-center space-x-4">
-            <button
-              onClick={() => navigate('/dashboard')}
-              className="back-button"
-              title="Retour au tableau de bord"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
+           
             <div className="matiere-info">
               <h1 className="matiere-title">{subject?.nom}</h1>
               <p className="matiere-description">{subject?.description}</p>

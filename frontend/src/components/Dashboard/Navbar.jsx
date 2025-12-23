@@ -1,12 +1,11 @@
 import { useNavigate } from 'react-router-dom';
-import { LogOut, User, Settings, Bell, Search, CheckCircle } from 'lucide-react';
+import { LogOut, User, Settings, Bell, Search, CheckCircle, Menu } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 
 import '../../styles/navbar.css';
 import ThemeToggle from '../UI/ThemeToggle';
 
-
-export default function Navbar() {
+export default function Navbar({ onToggleSidebar }) {
   const navigate = useNavigate();
   const [user, setUser] = useState({});
   const [showDropdown, setShowDropdown] = useState(false);
@@ -99,14 +98,26 @@ export default function Navbar() {
   return (
     <nav className="navbar">
       <div className="navbar-container">
-        {/* Logo et Nom */}
-        <div className="navbar-brand">
-          <div className="logo">
-            <span className="logo-icon">📚</span>
-          </div>
-          <div className="brand-text">
-            <h1 className="brand-title">StudyFlow</h1>
-            <p className="brand-subtitle">Gestion des études</p>
+        {/* Section gauche avec toggle sidebar */}
+        <div className="navbar-left">
+          {/* Bouton pour ouvrir/fermer la sidebar */}
+          <button 
+            className="sidebar-toggle"
+            onClick={onToggleSidebar}
+            aria-label="Toggle sidebar"
+          >
+            <Menu className="icon" />
+          </button>
+
+          {/* Logo et Nom */}
+          <div className="navbar-brand">
+            <div className="logo">
+              <span className="logo-icon">📚</span>
+            </div>
+            <div className="brand-text">
+              <h1 className="brand-title">Taskora</h1>
+              <p className="brand-subtitle">Gestion des études</p>
+            </div>
           </div>
         </div>
 

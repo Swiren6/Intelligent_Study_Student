@@ -1,140 +1,353 @@
-import React from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import {
   Home,
   BookOpen,
   CheckSquare,
   Calendar,
-  BarChart3,
-  Users,
+  Bell,
+  FileText,
   Settings,
   LogOut,
-  ChevronLeft,
+  Menu,
+  X,
+  ChevronDown,
+  User,
+  BarChart3,
+  UserCircle,
+  Cog,
+  Shield,
   ChevronRight,
-  HelpCircle,
-  FileText,
+  ChevronLeft
 } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
-import { useToast } from '../../context/ToastContext';
+import '../../styles/sidebar.css';
 
-const Sidebar = ({ open, onClose }) => {
+const Sidebar = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
+  
+  const location = useLocation();
+  const navigate = useNavigate();
   const { user, logout } = useAuth();
-  const { success } = useToast();
+  const sidebarRef = useRef(null);
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
 
-  const menuItems = [
-    { icon: Home, label: 'Dashboard', active: true },
-    { icon: BookOpen, label: 'Matières', badge: 7 },
-    { icon: CheckSquare, label: 'Tâches', badge: 12 },
-    { icon: Calendar, label: 'Planning', badge: 2 },
-    { icon: BarChart3, label: 'Statistiques' },
-    { icon: Users, label: 'Équipe' },
-    { icon: FileText, label: 'Documents' },
-  ];
+  // Fermer la sidebar en cliquant à l'extérieur (mobile)
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isOpen && sidebarRef.current && !sidebarRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
 
-  const secondaryItems = [
-    { icon: Settings, label: 'Paramètres' },
-    { icon: HelpCircle, label: 'Aide & Support' },
-  ];
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
 
-  const handleLogout = () => {
-    logout();
-    success('À bientôt ! 👋');
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [isOpen]);
+
+  // Swipe gestures pour mobile
+  useEffect(() => {
+    const handleTouchStart = (e) => {
+      touchStartX.current = e.changedTouches[0].screenX;
+    };
+
+    const handleTouchEnd = (e) => {
+      touchEndX.current = e.changedTouches[0].screenX;
+      handleSwipe();
+    };
+
+    const handleSwipe = () => {
+      const swipeThreshold = 50;
+      const swipeDistance = touchEndX.current - touchStartX.current;
+
+      if (Math.abs(swipeDistance) > swipeThreshold) {
+        if (swipeDistance > 0 && !isOpen && touchStartX.current < 50) {
+          // Swipe de gauche à droite pour ouvrir
+          setIsOpen(true);
+        } else if (swipeDistance < 0 && isOpen) {
+          // Swipe de droite à gauche pour fermer
+          setIsOpen(false);
+        }
+      }
+    };
+
+    document.addEventListener('touchstart', handleTouchStart);
+    document.addEventListener('touchend', handleTouchEnd);
+
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [isOpen]);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
+  const handleNavigation = (path) => {
+    if (path === '/login') {
+      handleLogout();
+    } else {
+      navigate(path);
+    }
+    setIsOpen(false);
+  };
+
+  const handleToggleCollapse = () => {
+    if (isAnimating) return;
+    
+    setIsAnimating(true);
+    setIsCollapsed(!isCollapsed);
+    
+    // Réinitialiser l'animation après le délai
+    setTimeout(() => {
+      setIsAnimating(false);
+    }, 300);
+  };
+
+  const menuItems = [
+    {
+      name: 'Dashboard',
+      icon: Home,
+      path: '/dashboard',
+      badge: null,
+    },
+    {
+      name: 'Matières',
+      icon: BookOpen,
+      path: '/dashboard/matieres',
+      badge: null,
+    },
+    {
+      name: 'Tâches',
+      icon: CheckSquare,
+      path: '/dashboard/tasks',
+      badge: 3,
+    },
+    {
+      name: 'Planning',
+      icon: Calendar,
+      path: '/dashboard/planning',
+      badge: null,
+    },
+    {
+      name: 'Emploi du temps',
+      icon: FileText,
+      path: '/dashboard/calendarPage',
+      badge: null,
+    },
+    {
+      name: 'Nouvelle Session',
+      icon: Bell,
+      path: '/dashboard/study-session',
+      badge: 5,
+    },
+    {
+      name: 'Statistiques',
+      icon: BarChart3,
+      path: '/dashboard/statistics',
+      badge: null,
+    },
+  ];
+
+  const isActive = (path) => location.pathname === path;
+
   return (
-    <aside className="h-full flex flex-col bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800">
-      {/* Logo */}
-      <div className="p-6 border-b border-gray-200 dark:border-gray-800">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-            <BookOpen className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">StudyPro</h1>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Dashboard académique</p>
-          </div>
-        </div>
-      </div>
+    <>
+      {/* Mobile Menu Button */}
+      <button
+        onClick={() => {
+          setIsAnimating(true);
+          setIsOpen(!isOpen);
+          setTimeout(() => setIsAnimating(false), 300);
+        }}
+        className="sidebar-mobile-button"
+      >
+        {isOpen ? (
+          <X className="sidebar-mobile-icon" />
+        ) : (
+          <Menu className="sidebar-mobile-icon" />
+        )}
+      </button>
 
-      {/* Navigation principale */}
-      <nav className="flex-1 p-4 overflow-y-auto">
-        <div className="space-y-2">
-          {menuItems.map((item) => (
+    
+
+      {/* Sidebar */}
+      <aside
+        ref={sidebarRef}
+        className={`sidebar-container ${isOpen ? 'sidebar-visible' : 'sidebar-hidden'} ${isCollapsed ? 'collapsed' : ''} ${isHovered && isCollapsed ? 'hovered' : ''}`}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        style={{
+          transition: isAnimating ? 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)' : 'none'
+        }}
+      >
+        {/* Logo / Brand */}
+        <div className="sidebar-header">
+          <Link to="/dashboard" className="sidebar-logo-link" onClick={() => setIsOpen(false)}>
+            <div className="sidebar-logo-icon">
+              <span className="sidebar-logo-initials">TF</span>
+            </div>
+            <div className={`sidebar-logo-text-container ${isCollapsed ? 'hidden' : ''}`}>
+              <span className="sidebar-logo-text">TaskFlow</span>
+              <p className="sidebar-logo-subtitle">Student Assistant</p>
+            </div>
+            {!isCollapsed && (
+              <button 
+                className="sidebar-collapse-btn"
+                onClick={handleToggleCollapse}
+                title="Réduire la sidebar"
+              >
+                <ChevronLeft className="collapse-icon" />
+              </button>
+            )}
+          </Link>
+        </div>
+
+        {/* User Profile Section */}
+        <div className="sidebar-profile-section">
+          <button
+            onClick={() => setIsProfileOpen(!isProfileOpen)}
+            className="sidebar-profile-button"
+          >
+            <div className="sidebar-profile-avatar">
+              <User className="sidebar-profile-avatar-icon" />
+            </div>
+            <div className={`sidebar-profile-info ${isCollapsed ? 'hidden' : ''}`}>
+              <p className="sidebar-profile-name">
+                {user?.nom || 'Utilisateur'} {user?.prenom ? ` ${user.prenom}` : ''}
+              </p>
+              <p className="sidebar-profile-email">
+                {user?.email || 'email@example.com'}
+              </p>
+            </div>
+            {!isCollapsed && (
+              <ChevronDown
+                className={`sidebar-profile-chevron ${isProfileOpen ? 'rotated' : ''}`}
+              />
+            )}
+          </button>
+
+          {/* Profile Dropdown (visible uniquement quand pas collapsed) */}
+          {isProfileOpen && !isCollapsed && (
+            <div className="sidebar-profile-dropdown">
+              <Link
+                to="/dashboard/profile"
+                className="sidebar-profile-link"
+                onClick={() => {
+                  setIsOpen(false);
+                  setIsProfileOpen(false);
+                }}
+              >
+                <UserCircle className="sidebar-profile-link-icon" />
+                <span>Mon profil</span>
+              </Link>
+              <Link
+                to="/dashboard/settings"
+                className="sidebar-profile-link"
+                onClick={() => {
+                  setIsOpen(false);
+                  setIsProfileOpen(false);
+                }}
+              >
+                <Settings className="sidebar-profile-link-icon" />
+                <span>Paramètres</span>
+              </Link>
+              <div className="sidebar-profile-divider" />
+              <button
+                onClick={handleLogout}
+                className="sidebar-logout-button"
+              >
+                <LogOut className="sidebar-logout-icon" />
+                <span>Déconnexion</span>
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Navigation Menu */}
+        <nav className="sidebar-nav">
+          <div className="sidebar-nav-items">
+            {menuItems.map((item) => {
+              const Icon = item.icon;
+              const active = isActive(item.path);
+
+              return (
+                <button
+                  key={item.path}
+                  onClick={() => handleNavigation(item.path)}
+                  className={`sidebar-nav-item ${active ? 'sidebar-nav-item-active' : ''} ${isCollapsed ? 'collapsed' : ''}`}
+                  title={isCollapsed ? item.name : ''}
+                >
+                  <div className="sidebar-nav-item-content">
+                    <div className={`sidebar-nav-item-icon-wrapper ${active ? 'sidebar-nav-item-icon-active' : ''}`}>
+                      <Icon
+                        className={`sidebar-nav-item-icon ${active ? 'sidebar-nav-item-icon-active' : ''}`}
+                      />
+                    </div>
+                    <span className={`sidebar-nav-item-text ${isCollapsed ? 'hidden' : ''}`}>
+                      {item.name}
+                    </span>
+                  </div>
+
+                  {/* Badge */}
+                  {!isCollapsed && item.badge && (
+                    <div className={`sidebar-nav-item-badge ${active ? 'sidebar-nav-item-badge-active' : ''}`}>
+                      {item.badge}
+                    </div>
+                  )}
+
+                  {/* Active indicator */}
+                  {active && (
+                    <div className="sidebar-nav-item-indicator" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </nav>
+
+        {/* Expand Button (visible quand collapsed) */}
+        {isCollapsed && (
+          <div className="sidebar-expand-area">
             <button
-              key={item.label}
-              className={`w-full flex items-center justify-between p-3 rounded-xl transition-all duration-200 group ${
-                item.active
-                  ? 'bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800/30'
-                  : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'
-              }`}
+              className="sidebar-expand-btn"
+              onClick={handleToggleCollapse}
+              title="Étendre la sidebar"
             >
-              <div className="flex items-center space-x-3">
-                <div className={`p-2 rounded-lg transition-all ${
-                  item.active 
-                    ? 'bg-white dark:bg-gray-800 shadow-sm'
-                    : 'group-hover:bg-white dark:group-hover:bg-gray-800'
-                }`}>
-                  <item.icon className="w-4 h-4" />
-                </div>
-                <span className="font-medium">{item.label}</span>
-              </div>
-              {item.badge && (
-                <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
-                  item.active
-                    ? 'bg-blue-100 dark:bg-blue-800 text-blue-600 dark:text-blue-300'
-                    : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-                }`}>
-                  {item.badge}
-                </span>
-              )}
+              <ChevronRight className="expand-icon" />
             </button>
-          ))}
-        </div>
-
-        {/* Section secondaire */}
-        <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-800 space-y-2">
-          {secondaryItems.map((item) => (
-            <button
-              key={item.label}
-              className="w-full flex items-center space-x-3 p-3 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
-            >
-              <div className="p-2 rounded-lg bg-gray-50 dark:bg-gray-800">
-                <item.icon className="w-4 h-4" />
-              </div>
-              <span className="font-medium">{item.label}</span>
-            </button>
-          ))}
-        </div>
-      </nav>
-
-      {/* User profile & Logout */}
-      <div className="p-4 border-t border-gray-200 dark:border-gray-800">
-        <div className="flex items-center space-x-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800 mb-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-            <span className="text-white font-semibold">
-              {user?.nom?.charAt(0) || 'E'}
-            </span>
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
-              {user?.nom || 'Étudiant'}
-            </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              {user?.email || 'étudiant@example.com'}
-            </p>
-          </div>
-        </div>
+        )}
+      </aside>
 
-        <button
-          onClick={handleLogout}
-          className="w-full flex items-center space-x-3 p-3 rounded-xl text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200 group"
-        >
-          <div className="p-2 rounded-lg bg-red-50 dark:bg-red-900/30 group-hover:scale-110 transition-transform">
-            <LogOut className="w-4 h-4" />
-          </div>
-          <span className="font-medium">Déconnexion</span>
-        </button>
-      </div>
-    </aside>
+      {/* Toggle Button for Desktop */}
+      <button
+        className={`sidebar-desktop-toggle ${isCollapsed ? 'collapsed' : ''}`}
+        onClick={handleToggleCollapse}
+        title={isCollapsed ? "Étendre la sidebar" : "Réduire la sidebar"}
+      >
+        {isCollapsed ? (
+          <ChevronRight className="toggle-icon" />
+        ) : (
+          <ChevronLeft className="toggle-icon" />
+        )}
+      </button>
+    </>
   );
 };
 
